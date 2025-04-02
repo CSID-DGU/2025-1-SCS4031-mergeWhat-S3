@@ -1,0 +1,32 @@
+# Gradle 관련 파일
+.gradle/
+build/
+
+# IDE 설정 파일
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+bin/
+
+# Spring Tool Suite
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache
+
+# VS Code
+.vscode/
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+.env*

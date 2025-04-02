@@ -1,0 +1,61 @@
+spring:
+#  datasource:
+#    url: jdbc:mariadb://${DATABASE_HOST}:${MARIA_DATABASE_PORT}/${MARIA_DATABASE_NAME}
+#    username: ${DB_USERNAME}
+#    password: ${DB_PASSWORD}
+#    driver-class-name: org.mariadb.jdbc.Driver
+
+  jpa:
+    show-sql: true
+    database: mysql
+    properties:
+      hibernate:
+        format_sql: true
+    generate-ddl: false
+
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      repositories:
+        enabled: false
+
+#  mail:
+#    host: smtp.gmail.com
+#    port: 465
+#    username: ${EMAIL_USERNAME}
+#    password: ${EMAIL_PASSWORD}
+#    properties:
+#      mail:
+#        smtp:
+#          auth: true
+#          ssl:
+#            enable: true
+#          connectiontimeout: 20000
+#          timeout: 20000
+#          writetimeout: 20000
+
+logging:
+  level:
+    beyond.momentours: DEBUG
+    org.springframework.security: DEBUG
+    org.mybatis: INFO
+    org.mybatis.spring.SqlSessionFactoryBean: WARN
+    org.mybatis.spring.mapper.ClassPathMapperScanner: WARN
+    beyond.momentours.date_course.query.repository: INFO
+    beyond.momentours.date_course_folder.query.repository: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+jwt:
+  secret-key: ${JWT_SECRET_KEY}
+
+openai:
+  api-url: https://api.openai.com
+  api-key: ${OPENAI_API_KEY}
+  model: gpt-3.5-turbo
+  question-count: 3
+  min-threshold: 2
+
+mybatis:
+  mapper-locations: classpath:/s3/mergewhat/mapper/**/*.xml
