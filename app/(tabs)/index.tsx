@@ -1,74 +1,73 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+// 시장 탭
+import React, { useRef, useMemo, useEffect } from 'react';
+import { View, StyleSheet, Text } from 'react-native';
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+// BottomSheet 컴포넌트 불러오기
+import BottomSheet from '@gorhom/bottom-sheet';
+
+// 컴포넌트 불러오기
+import SearchBar from '@/components/SearchBar'; // 검색창
+import MapPlaceholder from '@/components/MapPlaceholder'; // 지도(카카오맵으로 대체)
+import NearbyList from '@/components/NearbyList'; // 슬라이딩 영역 임시 리스트
 
 export default function HomeScreen() {
+  //BottomSheet 제어 참조 변수
+  const bottomSheetRef = useRef<BottomSheet>(null);
+
+  //슬라이딩 카드 비율 결정, 슬라이딩 필요 없을 시 제외
+  const snapPoints = useMemo(() => ['5%', '25%', '50%'], []);
+
+  useEffect(() => {
+    if (bottomSheetRef.current) {
+      bottomSheetRef.current.expand();
+    }
+  }, []);
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12'
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <View style={styles.container}>
+      <View style={styles.mapContainer}>
+        <MapPlaceholder />
+      </View>
+
+      <View style={styles.searchBarContainer}>
+        <SearchBar />
+      </View>
+
+      <BottomSheet
+        ref={bottomSheetRef} // 참조 연결
+        snapPoints={snapPoints}   // 슬라이딩 포인트 비율
+        index={1}
+        style={styles.sheetContainer}
+      >
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text>시장, 놀거리 리스트</Text>
+        </View>
+      </BottomSheet>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
+  container: {
+    flex: 1,
+  },
+
+  mapContainer: {
+    flex: 1,
+  },
+
+  searchBarContainer: {
+    position: 'absolute', // 지도 위에 검색창 겹침
+    top: 40,
+    left: 20,
+    right: 20,
+    zIndex: 10,
+  },
+
+  sheetContainer: {
+    flex: 1, // 높이를 BottomSheet 영역 전체로 확장
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+    backgroundColor: 'white',
   },
 });
