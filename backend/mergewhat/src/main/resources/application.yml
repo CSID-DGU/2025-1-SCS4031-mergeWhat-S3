@@ -1,9 +1,9 @@
 spring:
 #  datasource:
-#    url: jdbc:mariadb://${DATABASE_HOST}:${MARIA_DATABASE_PORT}/${MARIA_DATABASE_NAME}
+#    url: jdbc:mysql://${DATABASE_HOST}:${MARIA_DATABASE_PORT}/${MARIA_DATABASE_NAME}
 #    username: ${DB_USERNAME}
 #    password: ${DB_PASSWORD}
-#    driver-class-name: org.mariadb.jdbc.Driver
+#    driver-class-name: org.mysql.jdbc.Driver
 
   jpa:
     show-sql: true
