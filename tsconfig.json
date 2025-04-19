@@ -1,6 +1,7 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
+    "skipLibCheck": true,
     "strict": true,
     "paths": {
       "@/*": [
@@ -13,5 +14,8 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
+  ],
+  "exclude": [
+    "node_modules/expo-constants",
   ]
 }

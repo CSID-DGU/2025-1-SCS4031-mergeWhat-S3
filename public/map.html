@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- autoload=false 넣은 상태에서 kakao.maps.load 콜백 사용 -->
+    <script
+        src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=d73e9b362b7e9d719a4bf602da77dcb4&libraries=services&autoload=false">
+        </script>
+    <style>
+        html,
+        body,
+        #map {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+
+    <script>
+        kakao.maps.load(function () {
+            console.log('Kakao Maps SDK is loaded');
+
+            // kakao 전역이 연결되었는지 체크
+            if (typeof kakao !== 'undefined' && kakao.maps) {
+                console.log('kakao.maps is available');
+
+                const mapContainer = document.getElementById('map');
+                const mapOption = {
+                    center: new kakao.maps.LatLng(37.55893664, 126.9987376),
+                    level: 3
+                };
+                const map = new kakao.maps.Map(mapContainer, mapOption);
+
+                // 마커
+                new kakao.maps.Marker({
+                    position: new kakao.maps.LatLng(37.55893664, 126.9987376),
+                    map: map
+                });
+            } else {
+                console.error('kakao.maps is not available');
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -9,6 +9,7 @@ import BottomSheet from '@gorhom/bottom-sheet';
 import SearchBar from '@/components/SearchBar'; // 검색창
 import MapPlaceholder from '@/components/MapPlaceholder'; // 지도(카카오맵으로 대체)
 import NearbyList from '@/components/NearbyList'; // 슬라이딩 영역 임시 리스트
+import KakaoMap from '@/components/KakaoMap';
 
 export default function HomeScreen() {
   //BottomSheet 제어 참조 변수
@@ -26,7 +27,7 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.mapContainer}>
-        <MapPlaceholder />
+        <KakaoMap latitude={37.1} longitude={15} />
       </View>
 
       <View style={styles.searchBarContainer}>

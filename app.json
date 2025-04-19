@@ -1,5 +1,8 @@
 {
   "expo": {
+    "extra": {
+      "KAKAO_MAP_JS_KEY": "d73e9b362b7e9d719a4bf602da77dcb4"
+    },
     "name": "frontend-app",
     "slug": "frontend-app",
     "version": "1.0.0",
