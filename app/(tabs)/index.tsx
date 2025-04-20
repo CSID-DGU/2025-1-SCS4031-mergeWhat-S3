@@ -1,6 +1,9 @@
 // 시장 탭
-import React, { useRef, useMemo, useEffect } from 'react';
+import React, { useRef, useMemo, useEffect, useState } from 'react';
 import { View, StyleSheet, Text } from 'react-native';
+
+// Reanimated 로그 설정
+import { configureReanimatedLogger, ReanimatedLogLevel } from 'react-native-reanimated';
 
 // BottomSheet 컴포넌트 불러오기
 import BottomSheet from '@gorhom/bottom-sheet';
@@ -11,7 +14,17 @@ import MapPlaceholder from '@/components/MapPlaceholder'; // 지도(카카오맵
 import NearbyList from '@/components/NearbyList'; // 슬라이딩 영역 임시 리스트
 import KakaoMap from '@/components/KakaoMap';
 
+configureReanimatedLogger({
+  level: ReanimatedLogLevel.warn,
+  strict: false,
+});
+
 export default function HomeScreen() {
+  //State Hook
+  const [inputText, setInputText] = useState('');
+  const [keyword, setSearchKeyword] = useState('');
+  const [searchCount, setSearchCount] = useState(0);
+
   //BottomSheet 제어 참조 변수
   const bottomSheetRef = useRef<BottomSheet>(null);
 
@@ -24,14 +37,27 @@ export default function HomeScreen() {
     }
   }, []);
 
+  //내부 요소 나열
   return (
     <View style={styles.container}>
       <View style={styles.mapContainer}>
-        <KakaoMap latitude={37.1} longitude={15} />
+        <KakaoMap
+          latitude={37.1}
+          longitude={15}
+          searchKeyword={keyword}
+          searchCount={searchCount}
+        />
       </View>
 
       <View style={styles.searchBarContainer}>
-        <SearchBar />
+        <SearchBar
+          value={inputText}
+          onChangeText={setInputText}
+          onSearch={() => {
+            setSearchKeyword(inputText);
+            setSearchCount(c => c + 1);
+          }}
+        />
       </View>
 
       <BottomSheet

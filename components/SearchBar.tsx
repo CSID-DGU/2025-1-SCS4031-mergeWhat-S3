@@ -1,6 +1,12 @@
-import { View, TextInput } from 'react-native';
+import { View, TextInput, NativeSyntheticEvent, TextInputSubmitEditingEventData } from 'react-native';
 
-export default function SearchBar() {
+type SearchBarProps = {
+    value: string;
+    onChangeText: (text: string) => void;
+    onSearch?: () => void;
+};
+
+export default function SearchBar({ value, onChangeText, onSearch }: SearchBarProps) {
     return (
         <View style={{ padding: 10 }}>
             <TextInput
@@ -10,6 +16,15 @@ export default function SearchBar() {
                     borderRadius: 10,
                     paddingHorizontal: 15,
                     height: 40,
+                }}
+                value={value}
+                onChangeText={onChangeText}
+                returnKeyType="search"
+                // TextInput 이 기대하는 서명: (e) => void
+                onSubmitEditing={(
+                    e: NativeSyntheticEvent<TextInputSubmitEditingEventData>
+                ) => {
+                    onSearch?.();
                 }}
             />
         </View>
