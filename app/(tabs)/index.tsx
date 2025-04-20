@@ -1,43 +1,25 @@
-// 시장 탭
 import React, { useRef, useMemo, useEffect, useState } from 'react';
-import { View, StyleSheet, Text } from 'react-native';
-
-// Reanimated 로그 설정
+import { View, StyleSheet, Text, FlatList } from 'react-native';  // FlatList 추가
 import { configureReanimatedLogger, ReanimatedLogLevel } from 'react-native-reanimated';
-
-// BottomSheet 컴포넌트 불러오기
 import BottomSheet from '@gorhom/bottom-sheet';
-
-// 컴포넌트 불러오기
-import SearchBar from '@/components/SearchBar'; // 검색창
-import MapPlaceholder from '@/components/MapPlaceholder'; // 지도(카카오맵으로 대체)
-import NearbyList from '@/components/NearbyList'; // 슬라이딩 영역 임시 리스트
+import SearchBar from '@/components/SearchBar';
 import KakaoMap from '@/components/KakaoMap';
 
-configureReanimatedLogger({
-  level: ReanimatedLogLevel.warn,
-  strict: false,
-});
+configureReanimatedLogger({ level: ReanimatedLogLevel.warn, strict: false });
 
 export default function HomeScreen() {
-  //State Hook
   const [inputText, setInputText] = useState('');
   const [keyword, setSearchKeyword] = useState('');
   const [searchCount, setSearchCount] = useState(0);
+  const [placeList, setPlaceList] = useState<string[]>([]);   // 검색된 장소 리스트
 
-  //BottomSheet 제어 참조 변수
   const bottomSheetRef = useRef<BottomSheet>(null);
-
-  //슬라이딩 카드 비율 결정, 슬라이딩 필요 없을 시 제외
   const snapPoints = useMemo(() => ['5%', '25%', '50%'], []);
 
   useEffect(() => {
-    if (bottomSheetRef.current) {
-      bottomSheetRef.current.expand();
-    }
+    bottomSheetRef.current?.expand();
   }, []);
 
-  //내부 요소 나열
   return (
     <View style={styles.container}>
       <View style={styles.mapContainer}>
@@ -46,6 +28,14 @@ export default function HomeScreen() {
           longitude={15}
           searchKeyword={keyword}
           searchCount={searchCount}
+          onPlacesChange={places => {
+            // 키워드 포함도 기준으로 간단 정렬
+            const sorted = [...places].sort((a, b) => {
+              const ai = a.indexOf(keyword), bi = b.indexOf(keyword);
+              return (ai === -1 ? Infinity : ai) - (bi === -1 ? Infinity : bi);
+            });
+            setPlaceList(sorted);
+          }}
         />
       </View>
 
@@ -56,45 +46,83 @@ export default function HomeScreen() {
           onSearch={() => {
             setSearchKeyword(inputText);
             setSearchCount(c => c + 1);
+            setPlaceList([]);  // 검색 전 리스트 초기화
           }}
         />
       </View>
 
       <BottomSheet
-        ref={bottomSheetRef} // 참조 연결
-        snapPoints={snapPoints}   // 슬라이딩 포인트 비율
+        ref={bottomSheetRef}
+        snapPoints={snapPoints}
         index={1}
         style={styles.sheetContainer}
       >
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <Text>시장, 놀거리 리스트</Text>
-        </View>
+        <FlatList
+          data={placeList}
+          keyExtractor={(_, idx) => idx.toString()}
+          style={styles.list}
+          contentContainerStyle={styles.listContent}
+          renderItem={({ item }) => (
+            <View style={styles.itemContainer}>
+              <Text style={styles.itemText}>{item}</Text>
+            </View>
+          )}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>검색된 장소가 없습니다.</Text>
+            </View>
+          }
+        />
       </BottomSheet>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-
-  mapContainer: {
-    flex: 1,
-  },
-
+  container: { flex: 1 },
+  mapContainer: { flex: 1 },
   searchBarContainer: {
-    position: 'absolute', // 지도 위에 검색창 겹침
+    position: 'absolute',
     top: 40,
     left: 20,
     right: 20,
     zIndex: 10,
   },
-
   sheetContainer: {
-    flex: 1, // 높이를 BottomSheet 영역 전체로 확장
+    flex: 1,
+    backgroundColor: 'white',
+  },
+  list: {
+    flex: 1,
+  },
+  listContent: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  itemContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 8,
+    // iOS 그림자
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    // Android 그림자
+    elevation: 2,
+  },
+  itemText: {
+    fontSize: 16,
+    lineHeight: 24,
+  },
+  emptyContainer: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'white',
+    paddingTop: 40,
+  },
+  emptyText: {
+    color: '#888',
   },
 });
