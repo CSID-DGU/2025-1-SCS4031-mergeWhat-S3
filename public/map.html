@@ -15,6 +15,21 @@
             margin: 0;
             padding: 0;
         }
+
+        .marker-label {
+            position: relative;
+            left: 50%;
+            top: 20px;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.8);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #333;
+            white-space: nowrap;
+            pointer-events: none;
+        }
     </style>
 </head>
 
@@ -22,78 +37,80 @@
     <div id="map"></div>
     <script>
         kakao.maps.load(function () {
-            const mapContainer = document.getElementById('map');
-            const mapOption = { center: new kakao.maps.LatLng(37.55893664, 126.9987376), level: 3 };
-            const map = new kakao.maps.Map(mapContainer, mapOption);
+            const map = new kakao.maps.Map(
+                document.getElementById('map'),
+                { center: new kakao.maps.LatLng(37.55893664, 126.9987376), level: 3 }
+            );
             const places = new kakao.maps.services.Places(map);
+
             window.markers = [];
+            window.overlays = [];
+            window.lastPlacesData = [];
 
             function clearMarkers() {
                 window.markers.forEach(m => m.setMap(null));
                 window.markers = [];
             }
+            function clearOverlays() {
+                window.overlays.forEach(o => o.setMap(null));
+                window.overlays = [];
+            }
 
             window.searchPlaces = function (keyword) {
                 if (!keyword) return;
                 const center = map.getCenter();
-                clearMarkers();
-
-                // 1) 반경 검색
-                places.keywordSearch(keyword, function (data, status) {
+                clearMarkers(); clearOverlays();
+                places.keywordSearch(keyword, (data, status) => {
                     if (status === kakao.maps.services.Status.OK && data.length) {
-                        const names = [];
-                        data.forEach(p => {
+                        window.lastPlacesData = data;
+                        data.forEach((p, i) => {
                             const loc = new kakao.maps.LatLng(p.y, p.x);
                             const marker = new kakao.maps.Marker({ position: loc, map });
                             window.markers.push(marker);
-                            names.push(p.place_name);
+                            const overlay = new kakao.maps.CustomOverlay({
+                                map, position: loc,
+                                content: `<div class="marker-label">${p.place_name}</div>`,
+                                yAnchor: 1
+                            });
+                            window.overlays.push(overlay);
+                            kakao.maps.event.addListener(marker, 'click', () => {
+                                window.ReactNativeWebView.postMessage(
+                                    JSON.stringify({ type: 'MARKER_CLICK', index: i })
+                                );
+                            });
                         });
                         map.setCenter(center);
-
-                        // ✨ RN으로 이름 리스트 전달
                         window.ReactNativeWebView.postMessage(
-                            JSON.stringify({ type: 'PLACES_LIST', places: names })
+                            JSON.stringify({ type: 'PLACES_LIST', places: data.map(p => p.place_name) })
                         );
                     } else {
-                        // 2) 반경 결과 없으면 전역 검색 폴백
-                        places.keywordSearch(keyword, function (allData, allStatus) {
-                            if (allStatus === kakao.maps.services.Status.OK && allData.length) {
-                                clearMarkers();
-                                const first = allData[0];
-                                const newCenter = new kakao.maps.LatLng(first.y, first.x);
-                                map.setCenter(newCenter);
-                                map.setLevel(4);
-
-                                const names = [];
-                                allData.forEach(p => {
-                                    const loc = new kakao.maps.LatLng(p.y, p.x);
-                                    const marker = new kakao.maps.Marker({ position: loc, map });
-                                    window.markers.push(marker);
-                                    names.push(p.place_name);
-                                });
-
-                                window.ReactNativeWebView.postMessage(
-                                    JSON.stringify({ type: 'PLACES_LIST', places: names })
-                                );
-                            } else {
-                                alert('검색 결과가 없습니다. (status=' + status + ')');
-                                window.ReactNativeWebView.postMessage(
-                                    JSON.stringify({ type: 'PLACES_LIST', places: [] })
-                                );
-                            }
-                        });
                     }
-                }, {
-                    location: center,
-                    radius: 1000
+                }, { location: center, radius: 500 });
+            };
+
+            window.selectPlace = function (idx) {
+                clearMarkers(); clearOverlays();
+                const p = window.lastPlacesData[idx];
+                if (!p) return;
+                window.lastPlacesData = [p];
+                const loc = new kakao.maps.LatLng(p.y, p.x);
+                const marker = new kakao.maps.Marker({ position: loc, map });
+                window.markers.push(marker);
+                const overlay = new kakao.maps.CustomOverlay({
+                    map, position: loc,
+                    content: `<div class="marker-label">${p.place_name}</div>`,
+                    yAnchor: 1
                 });
+                window.overlays.push(overlay);
+                map.setCenter(loc);
+                map.setLevel(4);
             };
 
             function handleMessage(e) {
-                try {
-                    const msg = JSON.parse(e.data);
-                    if (msg.keyword) window.searchPlaces(msg.keyword);
-                } catch { }
+                let msg;
+                try { msg = JSON.parse(e.data); } catch { return; }
+                if (msg.keyword) window.searchPlaces(msg.keyword);
+                else if (msg.index !== undefined) window.selectPlace(msg.index);
             }
             window.addEventListener('message', handleMessage);
             document.addEventListener('message', handleMessage);

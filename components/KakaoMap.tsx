@@ -7,48 +7,53 @@ export type KakaoMapProps = {
   longitude: number;
   searchKeyword?: string;
   searchCount?: number;
-  onPlacesChange: (places: string[]) => void;  // ✨ 추가
+  onPlacesChange: (places: string[]) => void;
+  onMarkerClick: (index: number) => void;
+  selectIndex?: number;
 };
 
 export default function KakaoMap({
-  latitude,
-  longitude,
-  searchKeyword,
-  searchCount,
-  onPlacesChange,                        // ✨ 추가
+  latitude, longitude,
+  searchKeyword, searchCount,
+  onPlacesChange, onMarkerClick,
+  selectIndex
 }: KakaoMapProps) {
   const webviewRef = useRef<WebView>(null);
 
+  // 1) 검색 키워드 변경 시
   useEffect(() => {
     if (searchKeyword && webviewRef.current) {
       const kw = JSON.stringify(searchKeyword);
-      const js = `
+      webviewRef.current.injectJavaScript(`
         window.searchPlaces(${kw});
         true;
-      `;
-      webviewRef.current.injectJavaScript(js);
+      `);
     }
   }, [searchKeyword, searchCount]);
+
+  // 2) 리스트 클릭(selectIndex) 변경 시
+  useEffect(() => {
+    if (selectIndex !== undefined && webviewRef.current) {
+      webviewRef.current.injectJavaScript(`
+        window.selectPlace(${selectIndex});
+        true;
+      `);
+    }
+  }, [selectIndex]);
 
   return (
     <View style={styles.container}>
       <WebView
         ref={webviewRef}
         originWhitelist={['*']}
-        source={{ uri: 'http://192.168.75.56:3000/map.html' }}
-        style={styles.webview}
+        source={{ uri: 'http://192.168.75.208:3000/map.html' }}
         javaScriptEnabled
         domStorageEnabled
         onMessage={evt => {
           let msg;
-          try {
-            msg = JSON.parse(evt.nativeEvent.data);
-          } catch {
-            return;
-          }
-          if (msg.type === 'PLACES_LIST') {
-            onPlacesChange(msg.places);     // ✨ 추가
-          }
+          try { msg = JSON.parse(evt.nativeEvent.data); } catch { return; }
+          if (msg.type === 'PLACES_LIST') onPlacesChange(msg.places);
+          else if (msg.type === 'MARKER_CLICK') onMarkerClick(msg.index);
         }}
       />
     </View>
@@ -57,5 +62,5 @@ export default function KakaoMap({
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  webview: { flex: 1 },
+  webview: { flex: 1 }
 });
