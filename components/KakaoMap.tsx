@@ -16,7 +16,7 @@ export default function KakaoMap({
   latitude, longitude,
   searchKeyword, searchCount,
   onPlacesChange, onMarkerClick,
-  selectIndex
+  selectIndex,
 }: KakaoMapProps) {
   const webviewRef = useRef<WebView>(null);
 
@@ -49,10 +49,23 @@ export default function KakaoMap({
         source={{ uri: 'http://192.168.75.208:3000/map.html' }}
         javaScriptEnabled
         domStorageEnabled
+        injectedJavaScript={`
+    (function() {
+      const oldLog = console.log;
+      console.log = function(...args) {
+        window.ReactNativeWebView.postMessage(
+          JSON.stringify({ type: 'CONSOLE', payload: args })
+        );
+        oldLog.apply(console, args);
+      };
+    })();
+    true;
+  `}
         onMessage={evt => {
           let msg;
           try { msg = JSON.parse(evt.nativeEvent.data); } catch { return; }
-          if (msg.type === 'PLACES_LIST') onPlacesChange(msg.places);
+          if (msg.type === 'CONSOLE') console.log('[Webview]', ...msg.payload);
+          else if (msg.type === 'PLACES_LIST') onPlacesChange(msg.places);
           else if (msg.type === 'MARKER_CLICK') onMarkerClick(msg.index);
         }}
       />

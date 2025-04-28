@@ -5,7 +5,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script
-        src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=d73e9b362b7e9d719a4bf602da77dcb4&libraries=services&autoload=false"></script>
+        src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=d73e9b362b7e9d719a4bf602da77dcb4&libraries=services&autoload=false">
+        </script>
     <style>
         html,
         body,
@@ -30,6 +31,23 @@
             white-space: nowrap;
             pointer-events: none;
         }
+
+        .parking-label {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 4px 8px;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+            font-size: 12px;
+            text-align: center;
+            line-height: 1.2;
+            pointer-events: none;
+        }
+
+        .parking-label strong {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 2px;
+        }
     </style>
 </head>
 
@@ -37,83 +55,171 @@
     <div id="map"></div>
     <script>
         kakao.maps.load(function () {
+            // --- 1) 지도 & 서비스 초기화 ---
             const map = new kakao.maps.Map(
                 document.getElementById('map'),
                 { center: new kakao.maps.LatLng(37.55893664, 126.9987376), level: 3 }
             );
             const places = new kakao.maps.services.Places(map);
 
+            // --- 이름 정규화 (괄호 제거 + 공백 제거 + 소문자화) ---
+            function normalizeName(str) {
+                return str
+                    .replace(/\s*\(.*?\)\s*/g, '') // 괄호 및 안 내용 제거
+                    .replace(/\s*/g, '')           // 모든 공백 제거
+                    .toLowerCase()                 // 소문자화
+                    .trim();
+            }
+
+            // 전역 관리 배열
             window.markers = [];
             window.overlays = [];
+            window.parkingOverlays = [];
             window.lastPlacesData = [];
 
-            function clearMarkers() {
-                window.markers.forEach(m => m.setMap(null));
-                window.markers = [];
+            function clearMarkers() { window.markers.forEach(m => m.setMap(null)); window.markers = []; }
+            function clearOverlays() { window.overlays.forEach(o => o.setMap(null)); window.overlays = []; }
+            function clearParkingOverlays() {
+                window.parkingOverlays.forEach(o => o.setMap(null));
+                window.parkingOverlays = [];
             }
-            function clearOverlays() {
-                window.overlays.forEach(o => o.setMap(null));
-                window.overlays = [];
+            function isInView(lat, lng) {
+                const bounds = map.getBounds();
+                return bounds.contain(new kakao.maps.LatLng(lat, lng));
             }
 
+            // --- 2) 키워드 검색 기능 ---
             window.searchPlaces = function (keyword) {
+                console.log('searchPlaces:', keyword);
                 if (!keyword) return;
-                const center = map.getCenter();
                 clearMarkers(); clearOverlays();
-                places.keywordSearch(keyword, (data, status) => {
-                    if (status === kakao.maps.services.Status.OK && data.length) {
-                        window.lastPlacesData = data;
-                        data.forEach((p, i) => {
-                            const loc = new kakao.maps.LatLng(p.y, p.x);
-                            const marker = new kakao.maps.Marker({ position: loc, map });
-                            window.markers.push(marker);
-                            const overlay = new kakao.maps.CustomOverlay({
-                                map, position: loc,
-                                content: `<div class="marker-label">${p.place_name}</div>`,
-                                yAnchor: 1
+
+                const center = map.getCenter();
+                places.keywordSearch(
+                    keyword,
+                    (data, status) => {
+                        if (status === kakao.maps.services.Status.OK && data.length) {
+                            window.lastPlacesData = data;
+                            const bounds = new kakao.maps.LatLngBounds();
+
+                            data.forEach((p, i) => {
+                                const loc = new kakao.maps.LatLng(p.y, p.x);
+                                // 마커
+                                const marker = new kakao.maps.Marker({ position: loc, map });
+                                window.markers.push(marker);
+                                // 라벨
+                                const overlay = new kakao.maps.CustomOverlay({
+                                    map, position: loc,
+                                    content: `<div class="marker-label">${p.place_name}</div>`,
+                                    yAnchor: 1
+                                });
+                                window.overlays.push(overlay);
+                                // 클릭 이벤트
+                                kakao.maps.event.addListener(marker, 'click', () => {
+                                    window.ReactNativeWebView.postMessage(
+                                        JSON.stringify({ type: 'MARKER_CLICK', index: i })
+                                    );
+                                });
+                                bounds.extend(loc);
                             });
-                            window.overlays.push(overlay);
-                            kakao.maps.event.addListener(marker, 'click', () => {
-                                window.ReactNativeWebView.postMessage(
-                                    JSON.stringify({ type: 'MARKER_CLICK', index: i })
-                                );
-                            });
-                        });
-                        map.setCenter(center);
-                        window.ReactNativeWebView.postMessage(
-                            JSON.stringify({ type: 'PLACES_LIST', places: data.map(p => p.place_name) })
-                        );
-                    } else {
-                    }
-                }, { location: center, radius: 500 });
+
+                            map.setBounds(bounds);
+                            window.ReactNativeWebView.postMessage(
+                                JSON.stringify({
+                                    type: 'PLACES_LIST',
+                                    places: data.map(p => p.place_name)
+                                })
+                            );
+                        }
+                    },
+                    { location: center, radius: 2000 }
+                );
             };
 
             window.selectPlace = function (idx) {
                 clearMarkers(); clearOverlays();
                 const p = window.lastPlacesData[idx];
                 if (!p) return;
-                window.lastPlacesData = [p];
                 const loc = new kakao.maps.LatLng(p.y, p.x);
-                const marker = new kakao.maps.Marker({ position: loc, map });
-                window.markers.push(marker);
-                const overlay = new kakao.maps.CustomOverlay({
+                new kakao.maps.Marker({ position: loc, map });
+                new kakao.maps.CustomOverlay({
                     map, position: loc,
                     content: `<div class="marker-label">${p.place_name}</div>`,
                     yAnchor: 1
                 });
-                window.overlays.push(overlay);
                 map.setCenter(loc);
                 map.setLevel(4);
             };
 
+            // 메시지 핸들러
             function handleMessage(e) {
                 let msg;
                 try { msg = JSON.parse(e.data); } catch { return; }
                 if (msg.keyword) window.searchPlaces(msg.keyword);
-                else if (msg.index !== undefined) window.selectPlace(msg.index);
+                if (msg.index !== undefined) window.selectPlace(msg.index);
+                if (msg.type === 'PARKING') window.searchParking();
             }
             window.addEventListener('message', handleMessage);
             document.addEventListener('message', handleMessage);
+
+            // --- 3) 주차장 정보 가져오기 & 오버레이 추가 ---
+            async function fetchParkingData() {
+                console.log('GetParkingInfo API 호출');
+                const serviceKey = '4d5054615477686d373350634c6477';
+                const SERVICE = 'GetParkingInfo';
+                const START_IDX = 1;
+                const END_IDX = 1000;
+                const GU = '';
+                let url = `http://openapi.seoul.go.kr:8088/${serviceKey}/json/${SERVICE}/${START_IDX}/${END_IDX}`;
+                if (GU) url += `/${encodeURIComponent(GU)}`;
+
+                try {
+                    const res = await fetch(url);
+                    const body = await res.json();
+                    const rows = body.GetParkingInfo?.DATA || [];
+                    console.log('주차장 건수:', rows.length);
+
+                    // 1) 기존 오버레이 클리어
+                    clearParkingOverlays();
+
+                    // 2) API 결과를 맵으로 변환 (key: normalizeName(item.PKLT_NM))
+                    const parkingInfoMap = {};
+                    rows.forEach(item => {
+                        const key = normalizeName(item.PKLT_NM);
+                        const total = Number(item.tpkct);
+                        const used = Number(item.now_prk_vhcl_cnt);
+                        const free = Math.max(0, total - used);
+                        parkingInfoMap[key] = { free, total };
+                    });
+
+                    // 3) 검색된 장소(lastPlacesData)와 매칭해서 오버레이 추가
+                    window.lastPlacesData.forEach(p => {
+                        const matchKey = normalizeName(p.place_name);
+                        const info = parkingInfoMap[matchKey];
+                        if (!info) return;
+
+                        const loc = new kakao.maps.LatLng(p.y, p.x);
+                        if (!isInView(loc.getLat(), loc.getLng())) return;
+
+                        const overlay = new kakao.maps.CustomOverlay({
+                            map,
+                            position: loc,
+                            content: `
+                                <div class="parking-label">
+                                    <strong>${p.place_name}</strong>
+                                    ${info.free}/${info.total}
+                                </div>`,
+                            yAnchor: 1
+                        });
+                        window.parkingOverlays.push(overlay);
+                    });
+                } catch (e) {
+                    console.error('API 호출 에러', e);
+                }
+            }
+
+            window.searchParking = fetchParkingData;
+            kakao.maps.event.addListener(map, 'idle', fetchParkingData);
         });
     </script>
 </body>
