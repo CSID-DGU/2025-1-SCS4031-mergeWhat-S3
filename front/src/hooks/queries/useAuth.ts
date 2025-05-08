@@ -1,38 +1,45 @@
 import {useEffect} from 'react';
-import {useMutation, useQuery} from '@tanstack/react-query';
+import {MutationFunction, useMutation, useQuery} from '@tanstack/react-query';
+
 import {
+  ResponseProfile,
+  ResponseToken,
   getAccessToken,
   getProfile,
+  kakaoLogin,
   logout,
   postLogin,
   postSignup,
 } from '../../api/auth';
 import {
-  UseMutationCustomOptions,
-  UseQueryCustomOptions,
-} from '../../types/common';
-import {
   removeEncryptStorage,
-  setEncryptStorage,
   removeHeader,
+  setEncryptStorage,
   setHeader,
 } from '../../utils';
 import queryClient from '../../api/queryClient';
 import {numbers, queryKeys, storageKeys} from '../../constants';
+import type {
+  UseMutationCustomOptions,
+  UseQueryCustomOptions,
+} from '../../types/common';
 
-function useSignup(mutaionOptions?: UseMutationCustomOptions) {
+function useSignup(mutationOptions?: UseMutationCustomOptions) {
   return useMutation({
     mutationFn: postSignup,
-    ...mutaionOptions,
+    ...mutationOptions,
   });
 }
 
-function useLogin(mutationOptions?: UseMutationCustomOptions) {
+function useLogin<T>(
+  loginAPI: MutationFunction<ResponseToken, T>,
+  mutationOptions?: UseMutationCustomOptions,
+) {
   return useMutation({
     mutationFn: postLogin,
     onSuccess: ({accessToken, refreshToken}) => {
-      setEncryptStorage(storageKeys.REFRESH_TOKEN, refreshToken);
       setHeader('Authorization', `Bearer ${accessToken}`);
+      setEncryptStorage(storageKeys.REFRESH_TOKEN, refreshToken);
     },
     onSettled: () => {
       queryClient.refetchQueries({
@@ -46,8 +53,16 @@ function useLogin(mutationOptions?: UseMutationCustomOptions) {
   });
 }
 
+function useEmailLogin(mutationOptions?: UseMutationCustomOptions) {
+  return useLogin(postLogin, mutationOptions);
+}
+
+function useKakaoLogin(mutationOptions?: UseMutationCustomOptions) {
+  return useLogin(kakaoLogin, mutationOptions);
+}
+
 function useGetRefreshToken() {
-  const {isSuccess, data, isError} = useQuery({
+  const {data, error, isSuccess, isError} = useQuery({
     queryKey: [queryKeys.AUTH, queryKeys.GET_ACCESS_TOKEN],
     queryFn: getAccessToken,
     staleTime: numbers.ACCESS_TOKEN_REFRESH_TIME,
@@ -73,10 +88,10 @@ function useGetRefreshToken() {
   return {isSuccess, isError};
 }
 
-function useGetProfile(queryOptions?: UseQueryCustomOptions) {
+function useGetProfile(queryOptions?: UseQueryCustomOptions<ResponseProfile>) {
   return useQuery({
-    queryKey: [queryKeys.AUTH, queryKeys.GET_PROFILE],
     queryFn: getProfile,
+    queryKey: [queryKeys.AUTH, queryKeys.GET_PROFILE],
     ...queryOptions,
   });
 }
@@ -102,15 +117,17 @@ function useAuth() {
     enabled: refreshTokenQuery.isSuccess,
   });
   const isLogin = getProfileQuery.isSuccess;
-  const loginMutation = useLogin();
+  const loginMutation = useEmailLogin();
+  const kakaoLoginMutation = useKakaoLogin();
   const logoutMutation = useLogout();
 
   return {
     signupMutation,
     loginMutation,
-    isLogin,
     getProfileQuery,
+    isLogin,
     logoutMutation,
+    kakaoLoginMutation,
   };
 }
 

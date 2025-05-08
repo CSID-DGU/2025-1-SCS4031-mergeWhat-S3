@@ -4,6 +4,7 @@ import {Dimensions, Image, SafeAreaView, StyleSheet, View} from 'react-native';
 import {AuthStackParamList} from '../../navigations/stack/AuthStackNavigator';
 import CustomButton from '../../components/CustomButton';
 import {authNavigations} from '../../constants/navigations';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 type AuthHomeScreenProps = StackScreenProps<
   AuthStackParamList,
@@ -22,13 +23,19 @@ function AuthHomeScreen({navigation}: AuthHomeScreenProps) {
       </View>
       <View style={styles.buttonContainer}>
         <CustomButton
-          label="로그인하기"
-          onPress={() => navigation.navigate(authNavigations.LOGIN)}
+          label="카카오 로그인하기"
+          onPress={() => navigation.navigate(authNavigations.KAKAO)}
+          style={styles.kakaoButtonConatiner}
+          textStyle={styles.kakaoButtonText}
+          icon={
+            <Ionicons name={'chatbubble-sharp'} color={'#181500'} size={16} />
+          }
         />
+
         <CustomButton
-          label="회원가입하기"
-          variant="outlined"
-          onPress={() => navigation.navigate(authNavigations.SIGNUP)}
+          label="이메일 로그인하기"
+          onPress={() => navigation.navigate(authNavigations.LOGIN)}
+          icon={undefined}
         />
       </View>
     </SafeAreaView>
@@ -55,6 +62,12 @@ const styles = StyleSheet.create({
     width: '100%',
     //alignItems: 'center',
     gap: 10,
+  },
+  kakaoButtonConatiner: {
+    backgroundColor: '#FEE503',
+  },
+  kakaoButtonText: {
+    color: '#181600',
   },
 });
 

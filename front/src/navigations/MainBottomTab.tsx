@@ -1,5 +1,5 @@
 import {createDrawerNavigator} from '@react-navigation/drawer';
-import BottomTab from '../../components/BottomTab';
+import BottomTab from '.././components/BottomTab';
 
 function MainButtomTab() {
   return <BottomTab />;

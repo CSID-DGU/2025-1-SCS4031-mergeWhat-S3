@@ -51,5 +51,12 @@ const logout = async () => {
   await axiosInstance.post('/auth/logout');
 };
 
-export {postSignup, postLogin, getProfile, getAccessToken, logout};
+// 카카오 로그인
+const kakaoLogin = async (token: string): Promise<ResponseToken> => {
+  const {data} = await axiosInstance.post('/auth/kakao', {token});
+
+  return data;
+};
+
+export {postSignup, postLogin, getProfile, getAccessToken, logout, kakaoLogin};
 export type {RequestUser, ResponseToken, ResponseProfile};

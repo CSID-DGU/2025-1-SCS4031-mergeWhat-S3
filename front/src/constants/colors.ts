@@ -9,6 +9,9 @@ const colors = {
   GRAY_500: '#8E8E8E',
   GRAY_700: '#575757',
   BLACK: '#000',
+
+  mergeWhat_blue: '#6182DF',
+  mergeWhat_blue_clicked: '#4C68BA',
 };
 
 export {colors};

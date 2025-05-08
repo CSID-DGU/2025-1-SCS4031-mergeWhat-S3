@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <title>현재 위치 기반 전통시장 검색</title>
+    <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=7fe9c6b0107267e90bf2f78c90050d42&libraries=services"></script>
+  </head>
+  <body>
+    <script>
+      window.addEventListener('message', function (event) {
+        const data = JSON.parse(event.data);
+
+        if (data.type === 'fetchMarkets') {
+          const loc = new kakao.maps.LatLng(data.lat, data.lng);
+          const ps = new kakao.maps.services.Places();
+
+          ps.keywordSearch(
+            '전통시장',
+            function (results, status) {
+              if (status === kakao.maps.services.Status.OK) {
+                const markets = results.map((item, idx) => ({
+                  id: idx + 1,
+                  name: item.place_name,
+                  center_lat: parseFloat(item.y),
+                  center_lng: parseFloat(item.x),
+                }));
+
+                window.ReactNativeWebView.postMessage(JSON.stringify(markets));
+              }
+            },
+            {
+              location: loc,
+              radius: 10000,
+            },
+          );
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -1,10 +1,10 @@
 // 상속 관련한 것들 관리
 
 const authNavigations = {
-  // 쓸 일이 많으니까 '상수화' 과정
   AUTH_HOME: 'AuthHome',
   LOGIN: 'Login',
   SIGNUP: 'Signup',
+  KAKAO: 'Kakao',
 } as const;
 
 const MapNavigations = {

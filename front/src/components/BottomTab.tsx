@@ -7,7 +7,8 @@ import MapHomeScreen from '../screens/map/MapHomeScreen';
 import MarketScreen from '../screens/market/MarketScreen';
 import CommunityScreen from '../screens/community/CommunityScreen';
 import MypageScreen from '../screens/mypage/MypageScreen';
-import AuthHomeScreen from '../screens/auth/AuthHomeScreen'; //로그인 및 회원가입
+//import AuthHomeScreen from '../screens/auth/AuthHomeScreen'; //로그인 및 회원가입
+import AuthStackNavigator from '../navigations/stack/AuthStackNavigator';
 
 // 아이콘
 import mapIcon from '../assets/map_icon.png';
@@ -33,20 +34,6 @@ function BottomTab() {
         name="Map"
         component={MapHomeScreen}
         options={{
-          tabBarLabel: '지도',
-          tabBarIcon: ({focused}) => (
-            <Image
-              source={focused ? clickedMapIcon : mapIcon}
-              style={[styles.icon, focused && styles.focusedIcon]}
-              resizeMode="contain"
-            />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Market"
-        component={MarketScreen}
-        options={{
           tabBarLabel: '시장',
           tabBarIcon: ({focused}) => (
             <Image
@@ -57,6 +44,7 @@ function BottomTab() {
           ),
         }}
       />
+
       <Tab.Screen
         name="Community"
         component={CommunityScreen}
@@ -72,8 +60,8 @@ function BottomTab() {
         }}
       />
       <Tab.Screen
-        name="auth"
-        component={MypageScreen}
+        name="Mypage"
+        component={AuthStackNavigator}
         options={{
           tabBarLabel: '마이페이지',
           tabBarIcon: ({focused}) => (
