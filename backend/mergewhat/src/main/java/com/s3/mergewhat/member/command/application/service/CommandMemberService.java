@@ -7,9 +7,11 @@ import java.io.IOException;
 
 public interface CommandMemberService {
 
-    MemberDTO signupUser(MemberDTO requestMemberDTO);
-
-    MemberDTO signupMerchant(MemberDTO requestMemberDTO, MultipartFile regFile) throws IOException;
 
     String processSocialLogin(String provider, String accessToken);
+
+//    MemberDTO signupUser(MemberDTO requestMemberDTO);
+//
+//    MemberDTO signupMerchant(MemberDTO requestMemberDTO, MultipartFile regFile) throws IOException;
+
 }

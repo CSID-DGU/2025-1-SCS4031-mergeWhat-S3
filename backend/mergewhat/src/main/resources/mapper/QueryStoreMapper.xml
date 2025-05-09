@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.s3.mergewhat.store.query.mapper.QueryStoreMapper">
+
+    <select id="selectStoreDetailsByName" resultType="com.s3.mergewhat.store.command.application.dto.StoreDetailDTO">
+        SELECT
+            id AS store_id,
+            name,
+            address,
+            category_id,
+            is_affiliate
+        FROM store
+        WHERE name LIKE CONCAT('%', #{name}, '%')
+        ORDER BY id
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+
+</mapper>

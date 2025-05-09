@@ -20,42 +20,34 @@ spring:
       repositories:
         enabled: false
 
-#  mail:
-#    host: smtp.gmail.com
-#    port: 465
-#    username: ${EMAIL_USERNAME}
-#    password: ${EMAIL_PASSWORD}
-#    properties:
-#      mail:
-#        smtp:
-#          auth: true
-#          ssl:
-#            enable: true
-#          connectiontimeout: 20000
-#          timeout: 20000
-#          writetimeout: 20000
+  security:
+    oauth2:
+      client:
+        registration:
+          kakao:
+            client-id: ${KAKAO_CLIENT_ID}
+            client-secret: ""
+            redirect-uri: "{baseUrl}/login/oauth2/code/kakao"
+            authorization-grant-type: authorization_code
+            client-name: Kakao
+        provider:
+          kakao:
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-info-uri: https://kapi.kakao.com/v2/user/me
+
+mybatis:
+  mapper-locations: classpath:/s3/mergewhat/mapper/**/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
 
 logging:
   level:
-    beyond.momentours: DEBUG
+    com.s3.mergewhat: DEBUG
     org.springframework.security: DEBUG
-    org.mybatis: INFO
-    org.mybatis.spring.SqlSessionFactoryBean: WARN
-    org.mybatis.spring.mapper.ClassPathMapperScanner: WARN
-    beyond.momentours.date_course.query.repository: INFO
-    beyond.momentours.date_course_folder.query.repository: INFO
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
 
 jwt:
-  secret-key: ${JWT_SECRET_KEY}
-
-openai:
-  api-url: https://api.openai.com
-  api-key: ${OPENAI_API_KEY}
-  model: gpt-3.5-turbo
-  question-count: 3
-  min-threshold: 2
-
-mybatis:
-  mapper-locations: classpath:/s3/mergewhat/mapper/**/*.xml
+  secret: ${JWT_SECRET_KEY}
+  expiration: 3600000

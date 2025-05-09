@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping("/api/member")
+@RequestMapping("/api/auth")
 public class CommandMemberController {
 
     private final CommandMemberService commandMemberService;
@@ -26,19 +26,26 @@ public class CommandMemberController {
         this.memberConverter = memberConverter;
     }
 
-    // 일반 회원가입
-    @PostMapping("signup/user")
-    public ResponseDTO<?> signupUser(@RequestBody RequestSignupMemberVO requestSignupMemberVO) {
-
-        MemberDTO requestMemberDTO = memberConverter.fromSignupVOToDTO(requestSignupMemberVO, "USER");
-
-        MemberDTO responseMemberDTO = commandMemberService.signupUser(requestMemberDTO);
-        ResponseSignupMemberVO response = memberConverter.fromDTOToSignupVO(responseMemberDTO);
-
-        return ResponseDTO.ok(response);
+    // 소셜 로그인
+    @PostMapping("/kakao")
+    public ResponseDTO<?> socialLogin(@RequestBody RequestSocialLoginMemberVO request) {
+        String jwt = commandMemberService.processSocialLogin(request.getProvider(), request.getAccessToken());
+        return ResponseDTO.ok(new ResponseSocialLoginMemberVO(jwt));
     }
 
-    // 상인 회원가입
+//    // 일반 회원가입
+//    @PostMapping("signup/user")
+//    public ResponseDTO<?> signupUser(@RequestBody RequestSignupMemberVO requestSignupMemberVO) {
+//
+//        MemberDTO requestMemberDTO = memberConverter.fromSignupVOToDTO(requestSignupMemberVO, "USER");
+//
+//        MemberDTO responseMemberDTO = commandMemberService.signupUser(requestMemberDTO);
+//        ResponseSignupMemberVO response = memberConverter.fromDTOToSignupVO(responseMemberDTO);
+//
+//        return ResponseDTO.ok(response);
+//    }
+
+//    // 상인 회원가입
 //    @PostMapping("signup/merchant")
 //    public ResponseDTO<?> signupMerchant(@RequestPart RequestSignupMemberVO requestSignupMemberVO,
 //                                         @RequestPart MultipartFile regFile) {
@@ -51,11 +58,5 @@ public class CommandMemberController {
 //        return ResponseDTO.ok(response);
 //    }
 
-    // 소셜 로그인
-    @PostMapping("signup/social-login")
-    public ResponseDTO<?> socialLogin(@RequestBody RequestSocialLoginMemberVO request) {
-        String jwt = commandMemberService.processSocialLogin(request.getProvider(), request.getAccessToken());
-        return ResponseDTO.ok(new ResponseSocialLoginMemberVO(jwt));
-    }
 
 }

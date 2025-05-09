@@ -20,4 +20,14 @@
         WHERE id = #{id}
     </select>
 
+    <select id="selectMarketsByName" resultMap="MarketDTOMap">
+        SELECT
+            id,
+            name,
+            field
+        FROM market
+        WHERE name LIKE #{name}
+        ORDER BY id
+    </select>
+
 </mapper>

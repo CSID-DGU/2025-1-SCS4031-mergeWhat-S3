@@ -8,6 +8,8 @@ import com.s3.mergewhat.market.query.repository.MarketMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class QueryMarketServiceImpl implements QueryMarketService {
@@ -18,5 +20,10 @@ public class QueryMarketServiceImpl implements QueryMarketService {
     public MarketDTO getById(Long id) {
         return marketMapper.selectMarketById(id)
                 .orElseThrow(() -> new CommonException(ErrorCode.NOT_FOUND_MARKET));
+    }
+
+    @Override
+    public List<MarketDTO> getMarketsByName(String name) {
+        return marketMapper.selectMarketsByName(name);
     }
 }

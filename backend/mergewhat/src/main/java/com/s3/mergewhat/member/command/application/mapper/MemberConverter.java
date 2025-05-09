@@ -45,6 +45,10 @@ public class MemberConverter {
                 .bizRegistrationNumber(memberDTO.getBizRegistrationNumber())
                 .bizRegistrationUrl(memberDTO.getBizRegistrationUrl())
                 .role(Role.valueOf(memberDTO.getRole()))
+                .socialId(memberDTO.getSocialId())
+                .socialType(memberDTO.getSocialType())
+                .isSocial(memberDTO.isSocial())
+                .cratedAt(memberDTO.getCreatedAt())
                 .build();
     }
 
@@ -57,6 +61,11 @@ public class MemberConverter {
                 .bizRegistrationNumber(member.getBizRegistrationNumber())
                 .bizRegistrationUrl(member.getBizRegistrationUrl())
                 .role(member.getRole().name())
+                .socialId(member.getSocialId())
+                .socialType(member.getSocialType())
+                .isSocial(member.isSocial())
+                .createdAt(member.getCratedAt())
                 .build();
     }
+
 }

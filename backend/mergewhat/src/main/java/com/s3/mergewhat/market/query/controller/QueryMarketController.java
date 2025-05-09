@@ -3,10 +3,7 @@ package com.s3.mergewhat.market.query.controller;
 import com.s3.mergewhat.common.ResponseDTO;
 import com.s3.mergewhat.market.query.service.QueryMarketService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -19,6 +16,12 @@ public class QueryMarketController {
     @GetMapping("/{id}")
     public ResponseDTO<?> getMarket(@PathVariable Long id) {
         return ResponseDTO.ok(queryMarketService.getById(id));
+    }
+
+    // 시장명 조회
+    @GetMapping("/search")
+    public ResponseDTO<?> getMarketsByName(@RequestParam String name) {
+        return ResponseDTO.ok(queryMarketService.getMarketsByName(name));
     }
 
 }

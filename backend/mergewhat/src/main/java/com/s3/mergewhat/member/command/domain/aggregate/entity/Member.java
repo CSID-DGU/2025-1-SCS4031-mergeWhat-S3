@@ -44,5 +44,21 @@ public class Member {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime cratedAt;
 
+    @Column(name = "social_type", nullable = false)
+    private String socialType;
+
+    @Column(name = "social_id", nullable = false)
+    private String socialId;
+
+    @Column(name = "is_social", nullable = false)
+    private boolean isSocial;
+
+
+    public void updateSocialInfo(String nickname, String profileUrl, String socialType, String socialId) {
+        if (nickname != null) this.nickname = nickname;
+        if (profileUrl != null) this.profileUrl = profileUrl;
+        this.socialType = socialType;
+        this.socialId = socialId;
+    }
 
 }

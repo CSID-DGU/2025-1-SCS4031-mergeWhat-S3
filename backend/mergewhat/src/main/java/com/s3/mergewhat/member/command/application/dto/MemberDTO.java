@@ -21,6 +21,10 @@ public class MemberDTO {
     private String bizRegistrationUrl;
     private LocalDateTime createdAt;
 
+    private String socialType;
+    private String socialId;
+    private boolean isSocial;
+
     public void encodedPwd(String encodedPwd) {
         this.password = encodedPwd;
     }

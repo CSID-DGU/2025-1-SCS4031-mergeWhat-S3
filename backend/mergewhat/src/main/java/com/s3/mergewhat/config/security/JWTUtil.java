@@ -1,25 +1,41 @@
 package com.s3.mergewhat.config.security;
 
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security.Keys;
-import lombok.extern.slf4j.Slf4j;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Value;
 
-import java.security.Key;
+import java.util.Date;
 
-@Slf4j
 @Component
 public class JWTUtil {
 
-    private final Key key;
+    @Value("${jwt.secret}")
+    private String secretKey;
 
-    public JWTUtil(@Value("${jwt.secret-key}") String secret) {
-        try {
-            byte[] byteSecretKey = Decoders.BASE64.decode(secret);
-            key = Keys.hmacShaKeyFor(byteSecretKey);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to initialize JWTUtil with secret key: " + secret, e);
-        }
+    @Value("${jwt.expiration}")
+    private long expirationTime; // milliseconds
+
+    public String generateToken(Long userId) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + expirationTime);
+
+        return Jwts.builder()
+                .setSubject(String.valueOf(userId))
+                .setIssuedAt(now)
+                .setExpiration(expiryDate)
+                .signWith(SignatureAlgorithm.HS512, secretKey)
+                .compact();
+    }
+
+    public Long getUserIdFromToken(String token) {
+        Claims claims = Jwts.parser()
+                .setSigningKey(secretKey)
+                .parseClaimsJws(token)
+                .getBody();
+
+        return Long.parseLong(claims.getSubject());
     }
 }
+
