@@ -8,13 +8,19 @@ export const fetchMarketsByKeyword = async (keyword: string) => {
   return response.data;
 };
 
-// 카테고리별 상점 데이터 가져오기
+// 상점 데이터 가져오기
+export const fetchAllStores = async () => {
+  const response = await axiosInstance.get('/stores/all');
+  return response.data;
+};
+
+// 마켓ID별, 카테고리별 상점 데이터 가져오기
 export const fetchStoresByCategory = async (
   category: string,
-  polygonName: string,
+  marketName: string,
 ) => {
   const response = await axiosInstance.get('/stores/search', {
-    params: {query: category},
+    params: {marketName, category},
   });
   return response.data;
 };

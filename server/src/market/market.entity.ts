@@ -1,9 +1,11 @@
+import { Store } from 'src/store/store.entity';
 import {
   BaseEntity,
   Column,
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -33,4 +35,7 @@ export class Market extends BaseEntity {
 
   @DeleteDateColumn()
   deletedAt: Date | null;
+
+  @OneToMany(() => Store, (store) => store.market)
+  stores: Store[];
 }

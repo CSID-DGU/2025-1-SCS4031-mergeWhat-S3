@@ -27,6 +27,8 @@ import Geolocation from '@react-native-community/geolocation';
 import {marketImageMap} from '../../assets/market/marketImages';
 import {useFocusEffect} from '@react-navigation/native';
 import IndoorInfoSheet from './IndoorInfoSheet';
+import {BottomSheetBackdrop} from '@gorhom/bottom-sheet';
+import {BottomSheetDefaultBackdropProps} from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetBackdrop/types';
 
 async function requestLocationPermission() {
   if (Platform.OS === 'android') {
@@ -63,10 +65,31 @@ type Market = {
 
 function MapHomeScreen() {
   const bottomSheetRef = useRef<BottomSheetModal>(null);
-  const snapPoints = useMemo(() => ['7%', '25%', '80%'], []);
+
   const webViewRef = useRef<WebView>(null); // 검색->버튼시트에 뜬 결과 클릭했을때->화면이동
   const [keyword, setKeyword] = useState('');
   const [activeIndoor, setActiveIndoor] = useState<string | null>(null);
+
+  const snapPoints = useMemo(() => {
+    if (activeIndoor) return ['7%', '80%', '80%'];
+    else return ['7%', '45%', '80%']; // 예시: 기본 검색 결과 등
+  }, [activeIndoor]);
+
+  // 버튼시트 Backdrop
+  const renderBackdrop = useCallback(
+    (
+      props: React.JSX.IntrinsicAttributes & BottomSheetDefaultBackdropProps,
+    ) => (
+      <BottomSheetBackdrop
+        {...props}
+        pressBehavior="collapse" // 화면 누르면 버튼시트 알아서 내려감. 아예 사라지게 만드려면 "close"
+        disappearsOnIndex={0}
+        appearsOnIndex={1}
+        opacity={0.2} // 뒤 화면 어두워지는 정도. 기본값0.5
+      />
+    ),
+    [],
+  );
 
   // 시장 검색명
   const [searchResults, setSearchResults] = useState<
@@ -114,11 +137,11 @@ function MapHomeScreen() {
   }, [webViewLoaded]);
 
   // 시장 검색 -> 자동으로 버튼 시트가 올라오게 하기 위함
-  useEffect(() => {
+  /*useEffect(() => {
     if (searchResults.length > 0 && bottomSheetRef.current) {
       bottomSheetRef.current.snapToPosition('45%');
     }
-  }, [searchResults]);
+  }, [searchResults]);*/
 
   // BottomTab에서 "Map" 탭으로 다시 돌아왔을 때 초기화
   useFocusEffect(
@@ -176,6 +199,7 @@ function MapHomeScreen() {
 
   const handleSearchResults = (markets: Market[]) => {
     setSearchResults(markets); // 여전히 상태 업데이트는 필요함
+    setActiveIndoor(null); // IndoorInfoSheet 강제 해제. 언제라도 검색 시 -> 바로 버튼시트 내용이 searchResult로 바뀌게
 
     if (markets.length > 0) {
       const {center_lat, center_lng} = markets[0];
@@ -236,7 +260,6 @@ function MapHomeScreen() {
           }
         } catch (err) {
           console.error('❌ 전통시장 검색 실패:', err);
-          Alert.alert('전통시장 정보를 가져오는 데 실패했습니다.');
         }
       },
       error => {
@@ -250,7 +273,17 @@ function MapHomeScreen() {
     );
   };
 
-  const moveToLocation = (center_lat: number, center_lng: number) => {
+  // 시장명 검색 -> 검색 결과 -> 여기서 사용자가 클릭한 시장명 저장해두기.
+  const [selectedMarketName, setSelectedMarketName] = useState<string | null>(
+    null,
+  );
+
+  // 시장명 검색 -> 클릭한 시장 좌표로 지도 화면 이동
+  const moveToLocation = (
+    center_lat: number,
+    center_lng: number,
+    name: string,
+  ) => {
     console.log('🧭 이동할 시장 좌표:', center_lat, center_lng);
 
     webViewRef.current?.postMessage(
@@ -261,6 +294,8 @@ function MapHomeScreen() {
         zoomLevel: 0, // 검색 결과 클릭하면 -> 화면이 약도로 확대됨
       }),
     );
+    setActiveIndoor(name);
+    setSelectedMarketName(name);
   };
 
   // 백엔드로부터 searchResult 결과 렌더링
@@ -276,7 +311,9 @@ function MapHomeScreen() {
   }) => (
     <TouchableOpacity
       style={styles.item}
-      onPress={() => moveToLocation(item.center_lat, item.center_lng)} // 버튼 클릭 시 좌표 전송
+      onPress={() =>
+        moveToLocation(item.center_lat, item.center_lng, item.name)
+      } // 버튼 클릭 시 좌표 전송
     >
       <Text>{item.name}</Text>
     </TouchableOpacity>
@@ -355,7 +392,9 @@ function MapHomeScreen() {
     return (
       <TouchableOpacity
         style={{marginBottom: 20, padding: 10}}
-        onPress={() => moveToLocation(item.center_lat, item.center_lng)}>
+        onPress={() =>
+          moveToLocation(item.center_lat, item.center_lng, item.name)
+        }>
         <Text
           style={{
             marginTop: -5,
@@ -465,11 +504,14 @@ function MapHomeScreen() {
           snapPoints={snapPoints}
           index={0}
           enablePanDownToClose={false}
+          backdropComponent={renderBackdrop}
           style={styles.sheetContainer}>
           <View style={{flex: 1}}>
-            {activeIndoor ? (
-              // ✅ indoor 폴리곤 클릭 시: 카테고리 & 주변 정보 버튼 렌더링
-              <IndoorInfoSheet polygonName={activeIndoor} />
+            {activeIndoor && selectedMarketName ? (
+              <IndoorInfoSheet
+                polygonName={activeIndoor}
+                marketName={selectedMarketName}
+              />
             ) : searchResults.length > 0 ? (
               // 🔍 유저가 검색한 결과
               <BottomSheetFlatList

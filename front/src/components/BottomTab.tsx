@@ -4,11 +4,12 @@ import {Image, StyleSheet} from 'react-native';
 
 // Screens
 import MapHomeScreen from '../screens/map/MapHomeScreen';
-import MarketScreen from '../screens/market/MarketScreen';
-import CommunityScreen from '../screens/community/CommunityScreen';
+//import MarketScreen from '../screens/market/MarketScreen';
+import CommunityScreen from '../screens/community/PostListScreen';
 import MypageScreen from '../screens/mypage/MypageScreen';
 //import AuthHomeScreen from '../screens/auth/AuthHomeScreen'; //로그인 및 회원가입
 import AuthStackNavigator from '../navigations/stack/AuthStackNavigator';
+import CommunityStackNavigator from '../navigations/stack/CommunityNavigator';
 
 // 아이콘
 import mapIcon from '../assets/map_icon.png';
@@ -19,6 +20,7 @@ import commIcon from '../assets/community_icon.png';
 import clickedCommIcon from '../assets/click_community_icon.png';
 import mypageIcon from '../assets/mypage_icon.png';
 import clickedMypageIcon from '../assets/click_mypage_icon.png';
+import PostListScreen from '../screens/community/PostListScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -47,7 +49,7 @@ function BottomTab() {
 
       <Tab.Screen
         name="Community"
-        component={CommunityScreen}
+        component={CommunityStackNavigator}
         options={{
           tabBarLabel: '커뮤니티',
           tabBarIcon: ({focused}) => (

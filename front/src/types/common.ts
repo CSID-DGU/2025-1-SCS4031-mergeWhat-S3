@@ -22,3 +22,8 @@ type UseQueryCustomOptions<TQueryFnData = unknown, TData = TQueryFnData> = Omit<
 >;
 
 export type {ResponseError, UseMutationCustomOptions, UseQueryCustomOptions};
+
+export type CommunityStackParamList = {
+  PostListScreen: undefined;
+  PostWriteScreen: undefined;
+};

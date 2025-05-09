@@ -10,6 +10,31 @@ export class StoreService {
     private readonly storeRepo: Repository<Store>,
   ) {}
 
+  async findAllStores() {
+    return Store.find({
+      select: [
+        'id',
+        'name',
+        'category',
+        'address',
+        'contact',
+        'image',
+        'center_lat',
+        'center_lng',
+        'is_affiliate',
+      ],
+    });
+  }
+
+  async findByCategoryAndMarket(category: string, marketName: string) {
+    return this.storeRepo
+      .createQueryBuilder('store')
+      .leftJoinAndSelect('store.market', 'market')
+      .where('store.category = :category', { category })
+      .andWhere('market.name = :marketName', { marketName })
+      .getMany();
+  }
+
   async searchByNameOrCategory(query?: string): Promise<Store[]> {
     if (query) {
       // query가 있을 경우 이름 또는 카테고리로 검색
@@ -41,6 +66,7 @@ export class StoreService {
         'center_lat',
         'center_lng',
         'is_affiliate',
+        'description',
       ],
     });
   }

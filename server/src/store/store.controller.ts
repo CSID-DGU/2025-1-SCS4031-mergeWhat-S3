@@ -5,8 +5,16 @@ import { StoreService } from './store.service';
 export class StoreController {
   constructor(private readonly storeService: StoreService) {}
 
+  @Get('all')
+  findAllStores() {
+    return this.storeService.findAllStores();
+  }
+
   @Get('search')
-  async searchStores(@Query('query') query?: string) {
-    return this.storeService.searchByNameOrCategory(query);
+  findByCategoryAndMarket(
+    @Query('category') category: string,
+    @Query('marketName') marketName: string,
+  ) {
+    return this.storeService.findByCategoryAndMarket(category, marketName);
   }
 }

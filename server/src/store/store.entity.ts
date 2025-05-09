@@ -1,9 +1,12 @@
+import { Market } from 'src/market/market.entity';
 import {
   BaseEntity,
   Column,
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -34,6 +37,9 @@ export class Store extends BaseEntity {
   @Column('float', { nullable: true })
   center_lng: number;
 
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  description: string;
+
   /*@CreateDateColumn()
   createdAt: Date;
 
@@ -45,4 +51,8 @@ export class Store extends BaseEntity {
 
   @Column({ nullable: true }) // null값허용 - 프론트에서 기본 이미지 제공
   image: string;
+
+  @ManyToOne(() => Market, (market) => market.stores, { eager: true })
+  @JoinColumn({ name: 'market_id' }) // 실제 DB 컬럼명과 매칭
+  market: Market;
 }
