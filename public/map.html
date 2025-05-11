@@ -55,7 +55,7 @@
 <body>
     <div id="map"></div>
     <script>
-        // console.log → RN
+        // console.log → ReactNativeWebView
         (function () {
             const orig = console.log;
             console.log = (...args) => {
@@ -122,58 +122,72 @@
 
                 // 1) 메타 데이터 전체 로드
                 const metaResp = await fetch(
-                    `http://openapi.seoul.go.kr:8088/${key}/json/GetParkInfo/1/1000/종로구`
+                    `http://openapi.seoul.go.kr:8088/${key}/json/GetParkInfo/1/1000/`
                 );
                 const metaJson = await metaResp.json();
                 const meta = metaJson.GetParkInfo?.row || [];
-                console.log('▶️ [DEBUG-meta] first row keys:', Object.keys(meta[0]), meta[0]);
-                console.log('▶️ [DEBUG] meta rows:', meta);
 
                 // 2) 실시간 현황 전체 로드
                 const realResp = await fetch(
-                    `http://openapi.seoul.go.kr:8088/${key}/json/GetParkingInfo/1/1000/종로구`
+                    `http://openapi.seoul.go.kr:8088/${key}/json/GetParkingInfo/1/1000/`
                 );
                 const realJson = await realResp.json();
                 const real = realJson.GetParkingInfo?.row || [];
-                console.log('▶️ [DEBUG] real rows:', real);
 
                 // 3) 실시간 현황에서 사용 중 카운트만 추출
                 const realMap = {};
+                const usedOnceSet = new Set();
                 real.forEach(r => {
-                    console.log(`[DEBUG-real] PKLT_CD=${r.PKLT_CD}, PKLT_NM="${r.PKLT_NM}", NOW_PRK_VHCL_CNT=${r.NOW_PRK_VHCL_CNT}`);
-                    realMap[r.PKLT_CD] = Number(r.NOW_PRK_VHCL_CNT) || 0;
+                    if (!usedOnceSet.has(r.PKLT_CD)) {
+                        realMap[r.PKLT_CD] = Number(r.NOW_PRK_VHCL_CNT) || 0;
+                        usedOnceSet.add(r.PKLT_CD);
+                    }
                 });
 
-                const bounds = map.getBounds();
-                const seen = new Set();
-                const list = [];
 
-                // 4) 메타 기준으로 지도에 뿌릴 데이터 구성
+                // 4) 같은 주차장 이름별로 TPKCT와 NOW_PRK_VHCL_CNT 합산
+                const bounds = map.getBounds();
+                const sw = bounds.getSouthWest();
+                const ne = bounds.getNorthEast();
+
+                const paddingLat = 0.01;
+                const paddingLng = 0.01;
+
+                const extendedBounds = new kakao.maps.LatLngBounds(
+                    new kakao.maps.LatLng(sw.getLat() - paddingLat, sw.getLng() - paddingLng),
+                    new kakao.maps.LatLng(ne.getLat() + paddingLat, ne.getLng() + paddingLng)
+                )
+                const groupMap = {};
+                const usedSet = new Set();
                 meta.forEach(item => {
                     const code = item.PKLT_CD;
-                    if (seen.has(code)) return;
-                    seen.add(code);
-
+                    const name = item.PKLT_NM;
                     const lat = parseFloat(item.LAT), lng = parseFloat(item.LOT);
                     if (isNaN(lat) || isNaN(lng)) return;
                     const pos = new kakao.maps.LatLng(lat, lng);
-                    if (!bounds.contain(pos)) return;
+                    if (!extendedBounds.contain(pos)) return;
 
                     const total = Number(item.TPKCT) || 0;
-                    const used = realMap[code] || 0;
-                    const free = total - used;
-                    console.log(`[DEBUG-meta] PKLT_CD=${code}, total=${total}, used=${used}, free=${free}`);
+                    const used = (!usedSet.has(code) ? (realMap[code] || 0) : 0);
+                    usedSet.add(code);
 
-                    list.push({
-                        name: item.PKLT_NM,
-                        lat, lng,
-                        info: { free, total }
-                    });
+                    if (!groupMap[name]) {
+                        groupMap[name] = { total: 0, used: 0, lat, lng };
+                    }
+                    groupMap[name].total += total;
+                    groupMap[name].used += used;
                 });
 
+                // 5) 리스트로 변환
+                const list = Object.entries(groupMap).map(([name, { total, used, lat, lng }]) => ({
+                    name,
+                    lat,
+                    lng,
+                    info: { free: total - used, total }
+                }));
                 lastPlaces = list;
 
-                // 5) 지도에 표시
+                // 6) 지도에 표시
                 list.forEach((p, i) => {
                     const pos = new kakao.maps.LatLng(p.lat, p.lng);
                     const m = new kakao.maps.Marker({ position: pos, map });
@@ -184,10 +198,7 @@
                         );
                     });
                     const content = p.info.total
-                        ? `<div class="parking-label">
-                             <strong>${p.name}</strong>
-                             ${p.info.free}/${p.info.total}
-                           </div>`
+                        ? `<div class="parking-label"><strong>${p.name}</strong>${p.info.free}/${p.info.total}</div>`
                         : `<div class="marker-label">${p.name}</div>`;
                     const ov = new kakao.maps.CustomOverlay({
                         map, position: pos,
