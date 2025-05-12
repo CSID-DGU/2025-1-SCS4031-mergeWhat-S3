@@ -26,6 +26,9 @@ export default function IndexScreen() {
   const [parkingInfoMap, setParkingInfoMap] = useState<
     Record<string, { free: string; total: string }>
   >({});
+  const [sortType, setSortType] = useState<'잔여 주차면수'>('잔여 주차면수');
+  const sortOptions = ['잔여 주차면수'];
+  const [mode, setMode] = useState<'search' | 'parking'>('search');
 
   const webviewRef = useRef<WebView>(null);
   const bottomSheetRef = useRef<BottomSheet>(null);
@@ -53,10 +56,11 @@ export default function IndexScreen() {
   const handleMarkerClick = (idx: number) => {
     flatListRef.current?.scrollToIndex({ index: idx, animated: true, viewPosition: 0 });
     bottomSheetRef.current?.snapToIndex(2);
+    setSelectIndex(undefined);
+    setTimeout(() => setSelectIndex(idx), 0);
   };
 
   const handleItemPress = (idx: number) => {
-    setPlaceList([placeList[idx]]);
     setSelectIndex(idx);
     bottomSheetRef.current?.snapToIndex(1);
   };
@@ -65,12 +69,24 @@ export default function IndexScreen() {
     let msg;
     try { msg = JSON.parse(evt.nativeEvent.data); } catch { return; }
     if (msg.type === 'PARKING_DATA') {
+      setMode('parking');
       setParkingInfoMap(msg.data);
       setPlaceList(Object.keys(msg.data));
       setSelectIndex(undefined);
       bottomSheetRef.current?.snapToIndex(2);
     }
   };
+
+  const sortedPlaceList = useMemo(() => {
+    if (sortType === '잔여 주차면수') {
+      return [...placeList].sort((a, b) => {
+        const aFree = Number(parkingInfoMap[a]?.free ?? 0);
+        const bFree = Number(parkingInfoMap[b]?.free ?? 0);
+        return bFree - aFree;
+      });
+    }
+    return placeList;
+  }, [placeList, sortType, parkingInfoMap])
 
   return (
     <View style={styles.container}>
@@ -151,17 +167,39 @@ export default function IndexScreen() {
           </ScrollView>
         </View>
 
+        {mode === 'parking' && (
+          <View style={styles.filterButton}>
+            <TouchableOpacity
+              onPress={() => {
+                // 향후 팝업 등으로 바꿀 수 있음
+                setSortType('잔여 주차면수');
+              }}
+              style={{
+                backgroundColor: '#fff',
+                borderWidth: 1,
+                borderColor: '#007bff',
+                borderRadius: 20,
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+              }}
+            >
+              <Text style={{ color: '#007bff', fontSize: 14 }}>{sortType} ▼</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         <FlatList
           ref={flatListRef}
-          data={placeList}
+          data={sortedPlaceList}
           keyExtractor={(_, i) => i.toString()}
           nestedScrollEnabled
           contentContainerStyle={styles.listContent}
           renderItem={({ item, index }) => {
+            const isSelected = index === selectIndex;
             const info = parkingInfoMap[item];
             return (
               <TouchableOpacity onPress={() => handleItemPress(index)}>
-                <View style={styles.itemContainer}>
+                <View style={[styles.itemContainer, isSelected && styles.itemSelected]}>
                   <Text style={styles.itemText}>
                     {item}{info ? ` — ${info.free}/${info.total}` : ''}
                   </Text >
@@ -176,19 +214,18 @@ export default function IndexScreen() {
               </Text>
             </View>
           )}
-          ListFooterComponent={() =>
-            selectIndex === undefined && placeList.length > 0 ? (
-              <View style={styles.footerContainer}>
-                <TouchableOpacity
-                  onPress={() => flatListRef.current?.scrollToOffset({ offset: 0, animated: true })}
-                  style={styles.footerButton}
-                >
-                  <Text style={styles.footerText}>↑ 맨 위로</Text>
-                </TouchableOpacity>
-                <View style={{ height: 285 }} />
-              </View>
-            ) : null
-          }
+          ListFooterComponent={() => (
+            <View style={{ alignItems: 'center', paddingVertical: 12 }}>
+              <TouchableOpacity
+                onPress={() => flatListRef.current?.scrollToOffset({ offset: 0, animated: true })}
+                style={styles.footerButton}
+              >
+                <Text style={styles.footerText}>↑ 맨 위로</Text>
+              </TouchableOpacity>
+              <View style={{ height: 285 }} />
+            </View>
+          )}
+
         />
       </BottomSheet >
     </View >
@@ -212,6 +249,8 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 14, fontWeight: '600', marginTop: 8, marginBottom: 4 },
   chipScroll: { flexDirection: 'row', alignItems: 'center' },
   chip: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#ddd', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6, marginRight: 8, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 1 },
-  chipText: { fontSize: 12, color: '#333' }
+  chipText: { fontSize: 12, color: '#333' },
+  itemSelected: { backgroundColor: '#e0f0ff', },
+  filterButton: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, marginTop: 8 }
 });
 

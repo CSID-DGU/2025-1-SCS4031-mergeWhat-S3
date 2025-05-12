@@ -42,6 +42,7 @@
             text-align: center;
             pointer-events: none;
             margin-bottom: 40px;
+            pointer-events: none;
         }
 
         .parking-label strong {
@@ -93,7 +94,7 @@
                         const bounds = new kakao.maps.LatLngBounds();
                         data.forEach((p, i) => {
                             const pos = new kakao.maps.LatLng(p.y, p.x);
-                            const m = new kakao.maps.Marker({ position: pos, map });
+                            const m = new kakao.maps.Marker({ position: pos, map, zIndex: 10 });
                             markers.push(m);
                             kakao.maps.event.addListener(m, 'click', () => {
                                 window.ReactNativeWebView.postMessage(
@@ -118,6 +119,7 @@
 
             window.searchParking = async function () {
                 clearAll();
+
                 const key = '4d5054615477686d373350634c6477';
 
                 // 1) 메타 데이터 전체 로드
@@ -145,14 +147,15 @@
                 });
 
 
-                // 4) 같은 주차장 이름별로 TPKCT와 NOW_PRK_VHCL_CNT 합산
+                // 4) 같은 주차장 이름별로 TPKCT 합산, NOW_PRK_VHCL_CNT 활용하여 여유 주차대수 표시
                 const bounds = map.getBounds();
                 const sw = bounds.getSouthWest();
                 const ne = bounds.getNorthEast();
 
-                const paddingLat = 0.01;
-                const paddingLng = 0.01;
+                const paddingLat = 0.02;
+                const paddingLng = 0.02;
 
+                // 현재 보고 있는 지도 영역보다 넓게 탐색 (주차장 영역이 넓은 경우 마이너스로 표시되는 이슈 해결)
                 const extendedBounds = new kakao.maps.LatLngBounds(
                     new kakao.maps.LatLng(sw.getLat() - paddingLat, sw.getLng() - paddingLng),
                     new kakao.maps.LatLng(ne.getLat() + paddingLat, ne.getLng() + paddingLng)
@@ -190,44 +193,58 @@
                 // 6) 지도에 표시
                 list.forEach((p, i) => {
                     const pos = new kakao.maps.LatLng(p.lat, p.lng);
-                    const m = new kakao.maps.Marker({ position: pos, map });
-                    parkingMarkers.push(m);
+                    const m = new kakao.maps.Marker({ position: pos, map, zIndex: 10 });
+                    markers.push(m);
                     kakao.maps.event.addListener(m, 'click', () => {
                         window.ReactNativeWebView.postMessage(
                             JSON.stringify({ type: 'MARKER_CLICK', index: i })
                         );
                     });
+
+                    // 간혹 api 오류로 인해 마이너스로 뜰 경우 잔여대수 0으로 표시
+                    const free = Math.max(p.info.free, 0);
                     const content = p.info.total
-                        ? `<div class="parking-label"><strong>${p.name}</strong>${p.info.free}/${p.info.total}</div>`
+                        ? `<div class="parking-label"><strong>${p.name}</strong>${free}/${p.info.total}</div>`
                         : `<div class="marker-label">${p.name}</div>`;
                     const ov = new kakao.maps.CustomOverlay({
                         map, position: pos,
                         content, yAnchor: 1,
                         offset: new kakao.maps.Size(0, 15)
                     });
-                    parkingOverlays.push(ov);
+                    overlays.push(ov);
                 });
 
                 window.ReactNativeWebView.postMessage(
-                    JSON.stringify({ type: 'PLACES_LIST', places: list.map(p => p.name) })
+                    JSON.stringify({
+                        type: 'PARKING_DATA',
+                        data: list.reduce((acc, p) => {
+                            acc[p.name] = p.info;
+                            return acc;
+                        }, {})
+                    })
                 );
             };
 
             window.selectPlace = function (idx) {
-                clearAll();
                 const p = lastPlaces[idx];
-                if (!p) return;
+                if (!p) {
+                    return;
+                }
                 const pos = new kakao.maps.LatLng(p.lat, p.lng);
                 const m = new kakao.maps.Marker({ position: pos, map });
                 markers.push(m);
+
+                const content = p.info && p.info.total
+                    ? `<div class="parking-label"><strong>${p.name}</strong>${Math.max(p.info.free, 0)}/${p.info.total}</div>`
+                    : `<div class="marker-label">${p.name}</div>`;
+
                 const ov = new kakao.maps.CustomOverlay({
-                    map, position: pos,
-                    content: `<div class="marker-label">${p.name}</div>`,
+                    map, position: pos, content,
                     yAnchor: 1, offset: new kakao.maps.Size(0, 15)
                 });
                 overlays.push(ov);
                 map.setCenter(pos);
-                map.setLevel(4);
+                map.setLevel(3);
             };
 
             function handleMessage(e) {

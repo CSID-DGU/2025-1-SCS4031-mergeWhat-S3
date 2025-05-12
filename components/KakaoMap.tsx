@@ -75,7 +75,9 @@ const KakaoMap = forwardRef<WebView, KakaoMapProps>(({
           else if (msg.type === 'MARKER_CLICK') {
             onMarkerClick(msg.index);
           }
-          else if (msg.type === 'PARKING_DATA') onMessage(evt);
+          else if (msg.type === 'PARKING_DATA') {
+            onMessage(evt);
+          }
           else if (msg.type === 'CONSOLE') console.log('[WebView]', ...msg.payload);
         }}
       />
