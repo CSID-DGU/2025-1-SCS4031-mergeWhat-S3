@@ -33,7 +33,7 @@ export default function IndexScreen() {
   const webviewRef = useRef<WebView>(null);
   const bottomSheetRef = useRef<BottomSheet>(null);
   const flatListRef = useRef<FlatList<string>>(null);
-  const snapPoints = useMemo(() => ['5%', '25%', '40%', '85%'], []);
+  const snapPoints = useMemo(() => ['5%', '30%', '40%', '85%'], []);
 
   const categories = [
     { icon: '🥬', label: '채소' },
@@ -167,6 +167,7 @@ export default function IndexScreen() {
           </ScrollView>
         </View>
 
+        {/*
         {mode === 'parking' && (
           <View style={styles.filterButton}>
             <TouchableOpacity
@@ -187,10 +188,11 @@ export default function IndexScreen() {
             </TouchableOpacity>
           </View>
         )}
+        */}
 
         <FlatList
           ref={flatListRef}
-          data={sortedPlaceList}
+          data={placeList}
           keyExtractor={(_, i) => i.toString()}
           nestedScrollEnabled
           contentContainerStyle={styles.listContent}

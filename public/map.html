@@ -197,7 +197,7 @@
                     markers.push(m);
                     kakao.maps.event.addListener(m, 'click', () => {
                         window.ReactNativeWebView.postMessage(
-                            JSON.stringify({ type: 'MARKER_CLICK', index: i })
+                            JSON.stringify({ type: 'MARKER_CLICK', index: i, name: p.name })
                         );
                     });
 
@@ -220,7 +220,8 @@
                         data: list.reduce((acc, p) => {
                             acc[p.name] = p.info;
                             return acc;
-                        }, {})
+                        }, {}),
+                        places: list.map(p => p.name)
                     })
                 );
             };
@@ -256,6 +257,7 @@
             }
             window.addEventListener('message', handleMessage);
             document.addEventListener('message', handleMessage);
+
         });
     </script>
 </body>

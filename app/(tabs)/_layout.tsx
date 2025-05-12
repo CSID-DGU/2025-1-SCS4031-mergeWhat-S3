@@ -40,13 +40,6 @@ export default function TabLayout() {
             }}
           />
           <Tabs.Screen
-            name="market"
-            options={{
-              title: '시장',
-              tabBarIcon: ({ color }) => <Entypo name="shop" size={24} color="black" />,
-            }}
-          />
-          <Tabs.Screen
             name="comm"
             options={{
               title: '커뮤니티',
