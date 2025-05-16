@@ -27,3 +27,10 @@ export type CommunityStackParamList = {
   PostListScreen: undefined;
   PostWriteScreen: undefined;
 };
+
+export type MainTabParamList = {
+  Map: undefined;
+  Market: undefined;
+  Community: undefined;
+  MyPage: undefined;
+};

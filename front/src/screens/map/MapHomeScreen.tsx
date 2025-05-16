@@ -25,10 +25,15 @@ import {FlatList, GestureHandlerRootView} from 'react-native-gesture-handler';
 import htmlContent from './kakaoHTML'; // 카카오맵API로 폴리곤 나눈 html -> webview로 전환
 import Geolocation from '@react-native-community/geolocation';
 import {marketImageMap} from '../../assets/market/marketImages';
-import {useFocusEffect} from '@react-navigation/native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import IndoorInfoSheet from './IndoorInfoSheet';
 import {BottomSheetBackdrop} from '@gorhom/bottom-sheet';
 import {BottomSheetDefaultBackdropProps} from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetBackdrop/types';
+import {
+  BottomTabNavigationEventMap,
+  BottomTabNavigationProp,
+} from '@react-navigation/bottom-tabs';
+import {MainTabParamList} from '../../types/common';
 
 async function requestLocationPermission() {
   if (Platform.OS === 'android') {
@@ -74,6 +79,9 @@ function MapHomeScreen() {
     if (activeIndoor) return ['7%', '80%', '80%'];
     else return ['7%', '45%', '80%']; // 예시: 기본 검색 결과 등
   }, [activeIndoor]);
+
+  const navigation =
+    useNavigation<BottomTabNavigationProp<MainTabParamList, 'Map'>>();
 
   // 버튼시트 Backdrop
   const renderBackdrop = useCallback(
@@ -144,13 +152,14 @@ function MapHomeScreen() {
   }, [searchResults]);*/
 
   // BottomTab에서 "Map" 탭으로 다시 돌아왔을 때 초기화
-  useFocusEffect(
-    useCallback(() => {
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('tabPress', e => {
+      // 👇 이 부분에 초기화 로직 작성
       setKeyword('');
       setSearchResults([]);
       setActiveIndoor(null);
 
-      // 현재 위치로 지도 중심 이동
       Geolocation.getCurrentPosition(
         position => {
           const {latitude, longitude} = position.coords;
@@ -168,8 +177,10 @@ function MapHomeScreen() {
         },
         {enableHighAccuracy: true, timeout: 10000, maximumAge: 10000},
       );
-    }, []),
-  );
+    });
+
+    return unsubscribe;
+  }, [navigation]);
 
   const [currentPosition, setCurrentPosition] = useState<{
     latitude: number;
@@ -538,7 +549,16 @@ function MapHomeScreen() {
                   );
 
                   return (
-                    <View key={item.id} style={{marginBottom: 32}}>
+                    <TouchableOpacity
+                      key={item.id}
+                      style={{marginBottom: 32}}
+                      onPress={() =>
+                        moveToLocation(
+                          item.center_lat,
+                          item.center_lng,
+                          item.name,
+                        )
+                      }>
                       {imageSource && (
                         <Image
                           source={imageSource}
@@ -567,7 +587,7 @@ function MapHomeScreen() {
                         }}>
                         현재 위치에서 {distanceKm}km
                       </Text>
-                    </View>
+                    </TouchableOpacity>
                   );
                 })}
               </BottomSheetScrollView>

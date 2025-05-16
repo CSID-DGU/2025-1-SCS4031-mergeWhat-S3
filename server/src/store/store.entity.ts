@@ -1,4 +1,6 @@
+import { BusinessHour } from 'src/business_hour/bh.entity';
 import { Market } from 'src/market/market.entity';
+import { StoreProduct } from 'src/store_product/store_product.entity';
 import {
   BaseEntity,
   Column,
@@ -7,6 +9,7 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -53,6 +56,13 @@ export class Store extends BaseEntity {
   image: string;
 
   @ManyToOne(() => Market, (market) => market.stores, { eager: true })
-  @JoinColumn({ name: 'market_id' }) // 실제 DB 컬럼명과 매칭
+  @JoinColumn({ name: 'market_id' }) // 여기서 market_id는 store테이블에 있는 컬럼명.
+  // market테이블의 id, 즉 market.id 와 조인시키는 것. 명칭 헷갈리지 말기!
   market: Market;
+
+  @OneToMany(() => BusinessHour, (bh) => bh.store)
+  businessHours: BusinessHour[];
+
+  @OneToMany(() => StoreProduct, (product) => product.store)
+  products: StoreProduct[];
 }
