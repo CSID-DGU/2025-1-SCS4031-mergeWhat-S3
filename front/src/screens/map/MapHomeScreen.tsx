@@ -34,6 +34,8 @@ import {
   BottomTabNavigationProp,
 } from '@react-navigation/bottom-tabs';
 import {MainTabParamList} from '../../types/common';
+import {getUltraSrtFcst, WeatherData} from '../../components/weather';
+import {weatherIconMap} from '../../assets/weather/weatherImage';
 
 async function requestLocationPermission() {
   if (Platform.OS === 'android') {
@@ -66,6 +68,19 @@ type Market = {
   distance?: string;
 };
 
+function getWeatherIcon(weatherData: WeatherData[] | null) {
+  if (!weatherData) return null;
+  const pty = weatherData.find(d => d.category === 'PTY')?.value;
+  const sky = weatherData.find(d => d.category === 'SKY')?.value;
+
+  if (pty === '1' || pty === '4') return weatherIconMap.rain;
+  if (pty === '2' || pty === '3') return weatherIconMap.snow;
+  if (sky === '1') return weatherIconMap.sunny;
+  if (sky === '3' || sky === '4') return weatherIconMap.cloudy;
+
+  return null;
+}
+
 //-----------------------------------------------------------------------------
 
 function MapHomeScreen() {
@@ -73,12 +88,11 @@ function MapHomeScreen() {
 
   const webViewRef = useRef<WebView>(null); // 검색->버튼시트에 뜬 결과 클릭했을때->화면이동
   const [keyword, setKeyword] = useState('');
-  const [activeIndoor, setActiveIndoor] = useState<string | null>(null);
+  const [activeIndoor, setActiveIndoor] = useState<boolean>(false);
 
-  const snapPoints = useMemo(() => {
-    if (activeIndoor) return ['7%', '80%', '80%'];
-    else return ['7%', '45%', '80%']; // 예시: 기본 검색 결과 등
-  }, [activeIndoor]);
+  const snapPoints = useMemo(() => ['7%', '45%', '80%'], []);
+
+  const [weatherData, setWeatherData] = useState<WeatherData[] | null>(null);
 
   const navigation =
     useNavigation<BottomTabNavigationProp<MainTabParamList, 'Map'>>();
@@ -144,21 +158,13 @@ function MapHomeScreen() {
     }
   }, [webViewLoaded]);
 
-  // 시장 검색 -> 자동으로 버튼 시트가 올라오게 하기 위함
-  /*useEffect(() => {
-    if (searchResults.length > 0 && bottomSheetRef.current) {
-      bottomSheetRef.current.snapToPosition('45%');
-    }
-  }, [searchResults]);*/
-
   // BottomTab에서 "Map" 탭으로 다시 돌아왔을 때 초기화
-
   useEffect(() => {
     const unsubscribe = navigation.addListener('tabPress', e => {
       // 👇 이 부분에 초기화 로직 작성
       setKeyword('');
       setSearchResults([]);
-      setActiveIndoor(null);
+      setActiveIndoor(false);
 
       Geolocation.getCurrentPosition(
         position => {
@@ -181,6 +187,26 @@ function MapHomeScreen() {
 
     return unsubscribe;
   }, [navigation]);
+
+  // 기상청 정보 받아오기
+  useEffect(() => {
+    Geolocation.getCurrentPosition(
+      async pos => {
+        const {latitude, longitude} = pos.coords;
+
+        try {
+          const data = await getUltraSrtFcst(latitude, longitude);
+          setWeatherData(data);
+        } catch (error) {
+          console.error('[❌ 날씨 API 에러]', error);
+        }
+      },
+      err => {
+        console.error('[❌ 위치 권한 오류]', err.message);
+      },
+      {enableHighAccuracy: true, timeout: 10000, maximumAge: 10000},
+    );
+  }, []);
 
   const [currentPosition, setCurrentPosition] = useState<{
     latitude: number;
@@ -210,7 +236,7 @@ function MapHomeScreen() {
 
   const handleSearchResults = (markets: Market[]) => {
     setSearchResults(markets); // 여전히 상태 업데이트는 필요함
-    setActiveIndoor(null); // IndoorInfoSheet 강제 해제. 언제라도 검색 시 -> 바로 버튼시트 내용이 searchResult로 바뀌게
+    setActiveIndoor(false); // IndoorInfoSheet 강제 해제. 언제라도 검색 시 -> 바로 버튼시트 내용이 searchResult로 바뀌게
 
     if (markets.length > 0) {
       const {center_lat, center_lng} = markets[0];
@@ -305,7 +331,7 @@ function MapHomeScreen() {
         zoomLevel: 0, // 검색 결과 클릭하면 -> 화면이 약도로 확대됨
       }),
     );
-    setActiveIndoor(name);
+    //setActiveIndoor(name);
     setSelectedMarketName(name);
   };
 
@@ -438,17 +464,9 @@ function MapHomeScreen() {
     );
   };
 
-  const handleWebViewMessage = (event: WebViewMessageEvent) => {
-    try {
-      const data = JSON.parse(event.nativeEvent.data);
-      if (data.type === 'indoorClick' && data.name) {
-        console.log('✅ indoor polygon 클릭됨:', data.name);
-        setActiveIndoor(data.name);
-      }
-    } catch (e) {
-      console.warn('WebView 메시지 파싱 실패:', e);
-    }
-  };
+  const [clickedIndoorName, setClickedIndoorName] = useState<string | null>(
+    null,
+  );
 
   // !----  스타일  ---!
 
@@ -472,13 +490,36 @@ function MapHomeScreen() {
             javaScriptEnabled={true}
             domStorageEnabled
             style={styles.webview}
-            onMessage={handleWebViewMessage}
+            onMessage={(event: WebViewMessageEvent) => {
+              const message = JSON.parse(event.nativeEvent.data);
+              if (message.type === 'indoorClick') {
+                console.log('[📌 클릭된 폴리곤 이름]', message.name);
+                setClickedIndoorName(message.name); // ✅ 상태로 저장
+                setActiveIndoor(true);
+
+                bottomSheetRef.current?.snapToIndex(1);
+              }
+            }}
             onLoadEnd={() => {
               console.log('✅ WebView 로드 완료');
               setWebViewLoaded(true);
             }}
           />
         </View>
+
+        {/* 기상청 정보 버튼 */}
+        {weatherData && (
+          <TouchableOpacity style={styles.weatherButton} activeOpacity={0.8}>
+            <Image
+              source={getWeatherIcon(weatherData)}
+              style={{width: 26, height: 26, marginBottom: 0.5}} // 날씨아이콘 크기
+              resizeMode="contain"
+            />
+            <Text style={{fontSize: 13, fontWeight: '600'}}>
+              {weatherData.find(d => d.category === 'T1H')?.value ?? '-'}°C
+            </Text>
+          </TouchableOpacity>
+        )}
 
         {/* 현재 위치로 돌아가는 버튼 */}
         <TouchableOpacity
@@ -504,12 +545,12 @@ function MapHomeScreen() {
           }}>
           <Image
             source={require('../../assets/current_location_icon.png')} // 현재위치 버튼 이미지
-            style={{width: 60, height: 60}} // 현재위치 버튼 크기
+            style={{width: 84, height: 84}} // 현재위치 버튼 크기
             resizeMode="contain"
           />
         </TouchableOpacity>
 
-        {/* 화면에 항상 떠 있게 하는 BottomSheet */}
+        {/* BottomSheet 렌더링 */}
         <BottomSheet
           ref={bottomSheetRef}
           snapPoints={snapPoints}
@@ -518,10 +559,10 @@ function MapHomeScreen() {
           backdropComponent={renderBackdrop}
           style={styles.sheetContainer}>
           <View style={{flex: 1}}>
-            {activeIndoor && selectedMarketName ? (
+            {activeIndoor ? (
               <IndoorInfoSheet
-                polygonName={activeIndoor}
-                marketName={selectedMarketName}
+                polygonName={clickedIndoorName}
+                marketName={selectedMarketName || ''}
               />
             ) : searchResults.length > 0 ? (
               // 🔍 유저가 검색한 결과
@@ -552,13 +593,17 @@ function MapHomeScreen() {
                     <TouchableOpacity
                       key={item.id}
                       style={{marginBottom: 32}}
-                      onPress={() =>
+                      onPress={() => {
                         moveToLocation(
                           item.center_lat,
                           item.center_lng,
                           item.name,
-                        )
-                      }>
+                        );
+                        setClickedIndoorName(null); // 실내 폴리곤 아님
+                        setActiveIndoor(true); // ✅ IndoorInfoSheet 띄우기
+
+                        bottomSheetRef.current?.snapToIndex(1);
+                      }}>
                       {imageSource && (
                         <Image
                           source={imageSource}
@@ -643,11 +688,34 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 100,
     right: 20,
-    padding: 0, // 내부 패딩 제거
-    backgroundColor: 'transparent', // 배경 없음
-    borderRadius: 0, // 둥글지 않게
-    elevation: 0, // 안드로이드 그림자 제거
-    shadowColor: 'transparent', // iOS 그림자 제거
+    width: 40,
+    height: 40,
+    borderRadius: 30,
+    backgroundColor: 'white',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 0.5,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+
+  weatherButton: {
+    position: 'absolute',
+    bottom: 100,
+    top: 90,
+    left: 17,
+    //right: 90, // 현재위치 버튼이 right: 20 → 왼쪽으로 적절히 조절
+    width: 50,
+    height: 50,
+    borderRadius: 30,
+    backgroundColor: 'white',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
 });
 

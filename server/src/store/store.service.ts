@@ -22,6 +22,7 @@ export class StoreService {
         'center_lat',
         'center_lng',
         'is_affiliate',
+        'indoor_name',
       ],
     });
   }
@@ -50,6 +51,7 @@ export class StoreService {
           'center_lat',
           'center_lng',
           'is_affiliate',
+          'indoor_name',
         ],
       });
     }
@@ -67,6 +69,7 @@ export class StoreService {
         'center_lng',
         'is_affiliate',
         'description',
+        'indoor_name',
       ],
     });
   }

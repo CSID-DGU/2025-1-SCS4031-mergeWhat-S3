@@ -829,13 +829,14 @@ const htmlContent = `
           kakao.maps.event.addListener(polygon, "click", () => {
             polygon.setOptions(highlightOption);
             setTimeout(() => polygon.setOptions(resetOption), 300);
+            
 
             if (window.ReactNativeWebView) {
               if (name) {
                 window.ReactNativeWebView.postMessage(
                   JSON.stringify({
                     type: "indoorClick",
-                    name: name,
+                    name: indoorName,
                   })
                 );
               } else {

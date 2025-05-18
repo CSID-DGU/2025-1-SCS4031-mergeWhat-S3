@@ -43,6 +43,9 @@ export class Store extends BaseEntity {
   @Column({ type: 'varchar', length: 255, nullable: true })
   description: string;
 
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  indoor_name: string;
+
   /*@CreateDateColumn()
   createdAt: Date;
 

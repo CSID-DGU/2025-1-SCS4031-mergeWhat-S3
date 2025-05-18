@@ -11,7 +11,8 @@ import Geolocation from '@react-native-community/geolocation';
 import {BottomSheetScrollView} from '@gorhom/bottom-sheet';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {fetchBusinessHourByStoreId, BusinessHour} from '../../api/market';
-import ParkingInfo from '../../components/Parking';
+import ParkingInfo from '../../components/IndoorInfo/Parking';
+import AroundInfo from '../../components/IndoorInfo/Around';
 
 const defaultImage = require('../../assets/시장기본이미지.jpg');
 const productCategories = ['농수산물', '먹거리', '옷', '혼수', '가맹점'];
@@ -26,10 +27,11 @@ type Store = {
   description?: string | null;
   is_affiliate: boolean;
   address?: string;
-  // time?: string;
   contact?: string;
+  indoor_name: string;
 };
 
+// 현재위치와 가게별 거리 계산
 const getDistanceFromLatLonInKm = (
   lat1: number,
   lon1: number,
@@ -53,7 +55,7 @@ const IndoorInfoSheet = ({
   polygonName,
   marketName,
 }: {
-  polygonName: string;
+  polygonName: string | null;
   marketName: string;
 }) => {
   const [storeList, setStoreList] = useState<Store[]>([]);
@@ -89,14 +91,22 @@ const IndoorInfoSheet = ({
     const loadStores = async () => {
       try {
         const stores = await fetchAllStores();
-        setStoreList(stores);
+
+        if (polygonName) {
+          const filtered = stores.filter(
+            (store: Store) => store.indoor_name === polygonName,
+          );
+          setStoreList(filtered);
+        } else {
+          setStoreList(stores);
+        }
       } catch (error) {
-        console.error('❌ 전체 store 불러오기 실패:', error);
+        console.error('❌ store 불러오기 실패:', error);
       }
     };
 
     loadStores();
-  }, []);
+  }, [polygonName]); // <- polygonName이 바뀔 때마다 재요청
 
   useEffect(() => {
     const loadBusinessHour = async () => {
@@ -166,6 +176,7 @@ const IndoorInfoSheet = ({
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const handleCategoryPress = async (category: string) => {
+    console.log(`[👆 선택된 카테고리]: ${category}`);
     if (category === selectedCategory) {
       try {
         const stores = await fetchAllStores();
@@ -375,7 +386,7 @@ const IndoorInfoSheet = ({
             <Text style={[styles.sectionTitle, styles.nearbyTitle]}>
               주변 정보
             </Text>
-            <View style={styles.buttonRow}>
+            <View style={[styles.buttonRow, {marginBottom: 10}]}>
               {['🚗 주차장', '🚻 화장실', '🎡 근처 놀거리'].map(label => {
                 const pure = label.replace(/[^가-힣]/g, '');
                 return (
@@ -395,6 +406,13 @@ const IndoorInfoSheet = ({
                   {marketName} 상점들
                 </Text>
               )}
+
+            {selectedCategory === '근처놀거리' && (
+              <>
+                <AroundInfo type="실내놀거리" />
+                <AroundInfo type="관광지" />
+              </>
+            )}
 
             {selectedCategory === '주차장' && <ParkingInfo />}
 
@@ -487,7 +505,14 @@ const styles = StyleSheet.create({
   buttonSelected: {backgroundColor: '#91AEFF', borderColor: '#aaa'},
   buttonText: {fontSize: 14},
   storeCard: {marginBottom: 24},
-  storeImage: {width: '100%', height: 200, borderRadius: 12, marginBottom: 18},
+
+  storeImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 12,
+    marginBottom: 18,
+  },
+
   storeName: {fontSize: 16, fontWeight: '600'},
   storeDesc: {fontSize: 13, color: '#555', marginBottom: 4},
   storeDistance: {color: '#f55', fontSize: 13, fontWeight: '500'},
