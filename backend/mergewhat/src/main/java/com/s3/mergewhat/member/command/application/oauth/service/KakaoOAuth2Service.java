@@ -1,6 +1,6 @@
-package com.s3.mergewhat.config.security.oauth.service;
+package com.s3.mergewhat.member.command.application.oauth.service;
 
-import com.s3.mergewhat.config.security.dto.SocialUserInfo;
+import com.s3.mergewhat.member.command.application.dto.SocialUserInfo;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;

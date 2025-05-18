@@ -8,23 +8,19 @@ import com.s3.mergewhat.member.command.domain.vo.request.RequestSignupMemberVO;
 import com.s3.mergewhat.member.command.domain.vo.request.RequestSocialLoginMemberVO;
 import com.s3.mergewhat.member.command.domain.vo.response.ResponseSignupMemberVO;
 import com.s3.mergewhat.member.command.domain.vo.response.ResponseSocialLoginMemberVO;
+import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/auth")
 public class CommandMemberController {
 
     private final CommandMemberService commandMemberService;
     private final MemberConverter memberConverter;
-
-    @Autowired
-    public CommandMemberController(CommandMemberService commandMemberService, MemberConverter memberConverter) {
-        this.commandMemberService = commandMemberService;
-        this.memberConverter = memberConverter;
-    }
 
     // 소셜 로그인
     @PostMapping("/kakao")

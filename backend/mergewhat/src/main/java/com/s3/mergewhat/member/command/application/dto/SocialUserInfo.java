@@ -1,4 +1,4 @@
-package com.s3.mergewhat.config.security.dto;
+package com.s3.mergewhat.member.command.application.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

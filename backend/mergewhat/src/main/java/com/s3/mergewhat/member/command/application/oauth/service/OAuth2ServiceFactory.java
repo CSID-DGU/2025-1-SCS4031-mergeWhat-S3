@@ -1,6 +1,5 @@
-package com.s3.mergewhat.config.security.oauth.factory;
+package com.s3.mergewhat.member.command.application.oauth.service;
 
-import com.s3.mergewhat.config.security.oauth.service.OAuth2ProviderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

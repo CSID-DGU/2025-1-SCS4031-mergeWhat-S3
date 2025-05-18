@@ -1,24 +1,17 @@
 package com.s3.mergewhat.member.command.application.service;
 
-import com.s3.mergewhat.common.exception.CommonException;
-import com.s3.mergewhat.common.exception.ErrorCode;
 import com.s3.mergewhat.config.security.JWTUtil;
-import com.s3.mergewhat.config.security.dto.SocialUserInfo;
-import com.s3.mergewhat.config.security.oauth.factory.OAuth2ServiceFactory;
-import com.s3.mergewhat.config.security.oauth.service.OAuth2ProviderService;
+import com.s3.mergewhat.member.command.application.dto.SocialUserInfo;
+import com.s3.mergewhat.member.command.application.oauth.service.OAuth2ServiceFactory;
+import com.s3.mergewhat.member.command.application.oauth.service.OAuth2ProviderService;
 import com.s3.mergewhat.member.command.application.dto.MemberDTO;
 import com.s3.mergewhat.member.command.application.mapper.MemberConverter;
 import com.s3.mergewhat.member.command.domain.aggregate.entity.Member;
 import com.s3.mergewhat.member.command.domain.aggregate.entity.repository.MemberRepository;
-import com.s3.mergewhat.member.query.service.QueryMemberService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
 
 @Service

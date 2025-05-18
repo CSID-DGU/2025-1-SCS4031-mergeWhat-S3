@@ -7,7 +7,7 @@ import java.io.IOException;
 
 public interface CommandMemberService {
 
-
+    // 소셜 로그인
     String processSocialLogin(String provider, String accessToken);
 
 //    MemberDTO signupUser(MemberDTO requestMemberDTO);

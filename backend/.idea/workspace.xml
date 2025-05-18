@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
   <component name="ChangeListManager">
     <list default="true" id="c53549b9-c3ea-42f8-854c-a8bee77a8357" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
@@ -10,21 +13,21 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
   </component>
-  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
-  "lastFilter": {
-    "state": "OPEN",
-    "assignee": "Haegwan-Choe"
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;Haegwan-Choe&quot;
   }
-}]]></component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/CSID-DGU/2025-1-SCS4031-mergeWhat-S3.git",
-    "accountId": "99a85bf5-978d-474a-9935-984885651860"
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/CSID-DGU/2025-1-SCS4031-mergeWhat-S3.git&quot;,
+    &quot;accountId&quot;: &quot;99a85bf5-978d-474a-9935-984885651860&quot;
   }
-}]]></component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 6
-}]]></component>
+}</component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 6
+}</component>
   <component name="ProjectId" id="2vAIvq8m4X9mF3ho6WrkCURbM0O" />
   <component name="ProjectViewState">
     <option name="showLibraryContents" value="true" />
@@ -32,9 +35,13 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "main",
+    "git-widget-placeholder": "haegwan-back",
     "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "C:/2025-1-SCS4031-mergeWhat-S3",
+    "last_opened_file_path": "C:/2025-1-SCS4031-mergeWhat-S3/backend/mergewhat",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
     "vue.rearranger.settings.migration": "true"
   }
@@ -56,6 +63,7 @@
       <option name="presentableId" value="Default" />
       <updated>1743581684968</updated>
       <workItem from="1743581686079" duration="27000" />
+      <workItem from="1747055018355" duration="622000" />
     </task>
     <servers />
   </component>
