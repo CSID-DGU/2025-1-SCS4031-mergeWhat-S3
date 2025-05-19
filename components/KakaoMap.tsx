@@ -1,3 +1,4 @@
+//KakaoMap.tsx
 import React, { forwardRef, useImperativeHandle, useRef, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { WebView } from 'react-native-webview';
@@ -8,9 +9,11 @@ export type KakaoMapProps = {
   searchKeyword?: string;
   searchCount?: number;
   onPlacesChange: (places: string[]) => void;
-  onMarkerClick: (index: number) => void;
+  onMarkerClick: (name: string) => void;
   onMessage: (evt: any) => void;
   selectIndex?: number;
+  selectName?: string;
+  mode?: string;
 };
 
 const KakaoMap = forwardRef<WebView, KakaoMapProps>(({
@@ -21,7 +24,9 @@ const KakaoMap = forwardRef<WebView, KakaoMapProps>(({
   onPlacesChange,
   onMarkerClick,
   onMessage,
-  selectIndex
+  selectIndex,
+  selectName,
+  mode,
 }, ref) => {
   const webviewRef = useRef<WebView>(null);
   // expose WebView methods to parent
@@ -40,13 +45,23 @@ const KakaoMap = forwardRef<WebView, KakaoMapProps>(({
 
   // 선택 인덱스 변경 시 호출
   useEffect(() => {
-    if (selectIndex !== undefined && webviewRef.current) {
+    if (mode === 'search' && selectIndex !== undefined && webviewRef.current) {
       webviewRef.current.injectJavaScript(`
         window.selectPlace(${selectIndex});
         true;
       `);
     }
-  }, [selectIndex]);
+  }, [selectIndex, mode]);
+
+  useEffect(() => {
+    if (mode === 'parking' && selectName && webviewRef.current) {
+      const encoded = JSON.stringify(selectName);
+      webviewRef.current.injectJavaScript(`
+        window.selectPlaceByName(${encoded});
+        true;
+      `);
+    }
+  }, [selectName, mode]);
 
   return (
     <View style={styles.container}>
@@ -73,7 +88,7 @@ const KakaoMap = forwardRef<WebView, KakaoMapProps>(({
           try { msg = JSON.parse(evt.nativeEvent.data); } catch { return; }
           if (msg.type === 'PLACES_LIST') onPlacesChange(msg.places);
           else if (msg.type === 'MARKER_CLICK') {
-            onMarkerClick(msg.index);
+            onMarkerClick(msg.name);
           }
           else if (msg.type === 'PARKING_DATA') {
             onMessage(evt);
