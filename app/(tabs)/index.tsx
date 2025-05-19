@@ -16,6 +16,7 @@ import BottomSheet from '@gorhom/bottom-sheet';
 import SearchBar from '@/components/SearchBar';
 import KakaoMap from '@/components/KakaoMap';
 import * as Location from 'expo-location';
+import { Menu, Button, Provider as PaperProvider } from 'react-native-paper';
 
 configureReanimatedLogger({ level: ReanimatedLogLevel.warn, strict: false });
 
@@ -33,11 +34,12 @@ export default function IndexScreen() {
   const [mode, setMode] = useState<'search' | 'parking'>('search');
   const [selectName, setSelectName] = useState<string | undefined>(undefined);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number; } | null>(null);
+  const [menuVisible, setMenuVisible] = useState(false);
 
   const webviewRef = useRef<WebView>(null);
   const bottomSheetRef = useRef<BottomSheet>(null);
   const flatListRef = useRef<FlatList<string>>(null);
-  const snapPoints = useMemo(() => ['5%', '30%', '40%', '85%'], []);
+  const snapPoints = useMemo(() => ['3%', '30%', '35%', '40%', '85%'], []);
 
   const categories = [
     { icon: '🥬', label: '채소' },
@@ -169,152 +171,169 @@ export default function IndexScreen() {
   }, [placeList, sortType, parkingInfoMap, userLocation]);
 
   return (
-    <View style={styles.container}>
-      {/* 지도 영역 */}
-      <View style={styles.mapContainer}>
-        <KakaoMap
-          ref={webviewRef}
-          latitude={37.1}
-          longitude={15}
-          searchKeyword={keyword}
-          searchCount={searchCount}
-          onPlacesChange={places => {
-            setPlaceList(places);
-            setSelectIndex(undefined);
-            setParkingInfoMap({});
-          }}
-          onMarkerClick={handleMarkerClick}
-          onMessage={handleMessage}
-          selectIndex={selectIndex}
-          selectName={selectName}
-          mode={mode}
-        />
-      </View>
+    <PaperProvider>
+      <View style={styles.container}>
+        {/* 지도 영역 */}
+        <View style={styles.mapContainer}>
+          <KakaoMap
+            ref={webviewRef}
+            latitude={37.1}
+            longitude={15}
+            searchKeyword={keyword}
+            searchCount={searchCount}
+            onPlacesChange={places => {
+              setPlaceList(places);
+              setSelectIndex(undefined);
+              setParkingInfoMap({});
+            }}
+            onMarkerClick={handleMarkerClick}
+            onMessage={handleMessage}
+            selectIndex={selectIndex}
+            selectName={selectName}
+            mode={mode}
+          />
+        </View>
 
-      {/* 검색창 */}
-      <View style={styles.searchBarContainer}>
-        <SearchBar
-          value={inputText}
-          onChangeText={setInputText}
-          onSearch={() => {
-            setSearchKeyword(inputText);
-            setSearchCount(c => c + 1);
-            setPlaceList([]);
-            setSelectIndex(undefined);
-          }}
-        />
-      </View>
+        {/* 검색창 */}
+        <View style={styles.searchBarContainer}>
+          <SearchBar
+            value={inputText}
+            onChangeText={setInputText}
+            onSearch={() => {
+              setSearchKeyword(inputText);
+              setSearchCount(c => c + 1);
+              setPlaceList([]);
+              setSelectIndex(undefined);
+            }}
+          />
+        </View>
 
-      {/* BottomSheet + FlatList */}
-      <BottomSheet
-        ref={bottomSheetRef}
-        snapPoints={snapPoints}
-        index={0}
-        enableContentPanningGesture={false}
-        style={styles.sheetContainer}
-      >
-        {mode === 'search' && (
-          <View style={styles.topBar}>
-            <Text style={styles.sectionTitle}>카테고리</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.chipScroll}
-            >
-              {categories.map((c, i) => (
-                <TouchableOpacity key={i} style={styles.chip}>
-                  <Text style={styles.chipText}>{c.icon} {c.label}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+        {/* BottomSheet + FlatList */}
+        <BottomSheet
+          ref={bottomSheetRef}
+          snapPoints={snapPoints}
+          index={0}
+          enableContentPanningGesture={false}
+          style={styles.sheetContainer}
+        >
+          {mode === 'search' && (
+            <View style={styles.topBar}>
+              <Text style={styles.sectionTitle}>카테고리</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.chipScroll}
+              >
+                {categories.map((c, i) => (
+                  <TouchableOpacity key={i} style={styles.chip}>
+                    <Text style={styles.chipText}>{c.icon} {c.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
 
-            <Text style={styles.sectionTitle}>주변 정보</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.chipScroll}
-            >
-              {infos.map((info, i) => (
-                <TouchableOpacity
-                  key={i}
-                  style={styles.chip}
-                  onPress={() => {
-                    if (info.label === '주차장') {
-                      webviewRef.current?.postMessage(JSON.stringify({ type: 'PARKING' }));
-                    }
-                  }}
-                >
-                  <Text style={styles.chipText}>{info.icon} {info.label}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        )}
-
-        {mode === 'parking' && (
-          <View style={styles.filterButton}>
-            <TouchableOpacity
-              onPress={() => {
-                const next = sortType === '잔여 주차면수' ? '거리순' : '잔여 주차면수';
-                setSortType(next);
-              }}
-              style={{
-                backgroundColor: '#fff',
-                borderWidth: 1,
-                borderColor: '#007bff',
-                borderRadius: 20,
-                paddingHorizontal: 12,
-                paddingVertical: 6,
-              }}
-            >
-              <Text style={{ color: '#007bff', fontSize: 14 }}>{sortType} ▼</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        <FlatList
-          ref={flatListRef}
-          data={mode === 'parking' ? sortedPlaceList : placeList}
-          keyExtractor={(item) => item}
-          renderItem={({ item }) => {
-            const currentList = mode === 'parking' ? sortedPlaceList : placeList;
-            const idx = currentList.findIndex(p => p === item);
-            const isSelected = idx === selectIndex;
-            const info = parkingInfoMap[item];
-            return (
-              <TouchableOpacity onPress={() => handleItemPress(idx)}>
-                <View style={[styles.itemContainer, isSelected && styles.itemSelected]}>
-                  <Text style={styles.itemText}>
-                    {item}{info ? ` — ${info.free}/${info.total}` : ''}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            );
-          }}
-          ListEmptyComponent={() => (
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>
-                {placeList.length === 0 ? '검색된 장소가 없습니다.' : '주차장 정보가 없습니다.'}
-              </Text>
+              <Text style={styles.sectionTitle}>주변 정보</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.chipScroll}
+              >
+                {infos.map((info, i) => (
+                  <TouchableOpacity
+                    key={i}
+                    style={styles.chip}
+                    onPress={() => {
+                      if (info.label === '주차장') {
+                        webviewRef.current?.postMessage(JSON.stringify({ type: 'PARKING' }));
+                      }
+                    }}
+                  >
+                    <Text style={styles.chipText}>{info.icon} {info.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
             </View>
           )}
-          ListFooterComponent={() => (
-            placeList.length > 0 ? (
-              <View style={{ alignItems: 'center', paddingVertical: 12 }}>
-                <TouchableOpacity
-                  onPress={() => flatListRef.current?.scrollToOffset({ offset: 0, animated: true })}
-                  style={styles.footerButton}
-                >
-                  <Text style={styles.footerText}>↑ 맨 위로</Text>
-                </TouchableOpacity>
-                <View style={{ height: 500 }} />
-              </View>
-            ) : <View style={{ height: 500 }} />
+
+          {mode === 'parking' && (
+            <View style={styles.filterButton}>
+              <Menu
+                visible={menuVisible}
+                onDismiss={() => setMenuVisible(false)}
+                anchor={
+                  <Button
+                    mode="outlined"
+                    onPress={() => setMenuVisible(true)}
+                    textColor="#000"
+                    contentStyle={{ height: 36 }}
+                    labelStyle={{ fontSize: 13, lineHeight: 16 }}
+                    style={{
+                      borderColor: '#000',
+                      borderRadius: 20,
+                      alignSelf: 'flex-start',
+                    }}
+                  >
+                    {sortType} ▼
+                  </Button>
+                }
+              >
+                {['잔여 주차면수', '거리순'].map(option => (
+                  <Menu.Item
+                    key={option}
+                    onPress={() => {
+                      setSortType(option as typeof sortType);
+                      setMenuVisible(false);
+                    }}
+                    title={option}
+                  />
+                ))}
+              </Menu>
+            </View>
           )}
 
-        />
-      </BottomSheet >
-    </View >
+          <FlatList
+            ref={flatListRef}
+            data={mode === 'parking' ? sortedPlaceList : placeList}
+            keyExtractor={(item) => item}
+            renderItem={({ item }) => {
+              const currentList = mode === 'parking' ? sortedPlaceList : placeList;
+              const idx = currentList.findIndex(p => p === item);
+              const isSelected = idx === selectIndex;
+              const info = parkingInfoMap[item];
+              return (
+                <TouchableOpacity onPress={() => handleItemPress(idx)}>
+                  <View style={[styles.itemContainer, isSelected && styles.itemSelected]}>
+                    <Text style={styles.itemText}>
+                      {item}{info ? ` — ${info.free}/${info.total}` : ''}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            }}
+            ListEmptyComponent={() => (
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>
+                  {placeList.length === 0 ? '검색된 장소가 없습니다.' : '주차장 정보가 없습니다.'}
+                </Text>
+              </View>
+            )}
+            ListFooterComponent={() => (
+              placeList.length > 0 ? (
+                <View style={{ alignItems: 'center', paddingVertical: 12 }}>
+                  <TouchableOpacity
+                    onPress={() => flatListRef.current?.scrollToOffset({ offset: 0, animated: true })}
+                    style={styles.footerButton}
+                  >
+                    <Text style={styles.footerText}>↑ 맨 위로</Text>
+                  </TouchableOpacity>
+                  <View style={{ height: 500 }} />
+                </View>
+              ) : <View style={{ height: 500 }} />
+            )}
+
+          />
+        </BottomSheet >
+      </View >
+    </PaperProvider>
   );
 }
 
