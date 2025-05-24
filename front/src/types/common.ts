@@ -1,3 +1,5 @@
+// 네비게이션 파일을 위한 타입 정의
+
 import {AxiosError} from 'axios';
 import {
   UseMutationOptions,

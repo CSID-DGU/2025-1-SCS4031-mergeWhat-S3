@@ -1,4 +1,5 @@
-// 화면 전환되는 네비게이션을 다 이 파일에서!!
+// 화면전환 관련
+
 import React from 'react';
 import {StyleSheet} from 'react-native';
 import {createStackNavigator} from '@react-navigation/stack';

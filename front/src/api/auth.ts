@@ -51,7 +51,7 @@ const logout = async () => {
   await axiosInstance.post('/auth/logout');
 };
 
-// 카카오 로그인
+// 카카오 로그인 - 백엔드로 api 요청
 const kakaoLogin = async (token: string): Promise<ResponseToken> => {
   const {data} = await axiosInstance.post('/auth/kakao', {token});
 

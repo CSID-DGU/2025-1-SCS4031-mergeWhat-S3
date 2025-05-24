@@ -1,4 +1,4 @@
-// 상속 관련한 것들 관리
+// 상속 및 스택 네비게이션 이름 정의
 
 const authNavigations = {
   AUTH_HOME: 'AuthHome',
