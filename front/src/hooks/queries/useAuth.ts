@@ -1,6 +1,5 @@
 import {useEffect} from 'react';
-import {MutationFunction, useMutation, useQuery} from '@tanstack/react-query';
-
+import {useMutation, useQuery} from '@tanstack/react-query';
 import {
   ResponseProfile,
   ResponseToken,
@@ -8,8 +7,6 @@ import {
   getProfile,
   kakaoLogin,
   logout,
-  postLogin,
-  postSignup,
 } from '../../api/auth';
 import {
   removeEncryptStorage,
@@ -24,19 +21,9 @@ import type {
   UseQueryCustomOptions,
 } from '../../types/common';
 
-function useSignup(mutationOptions?: UseMutationCustomOptions) {
+function useKakaoLogin(mutationOptions?: UseMutationCustomOptions) {
   return useMutation({
-    mutationFn: postSignup,
-    ...mutationOptions,
-  });
-}
-
-function useLogin<T>(
-  loginAPI: MutationFunction<ResponseToken, T>,
-  mutationOptions?: UseMutationCustomOptions,
-) {
-  return useMutation({
-    mutationFn: postLogin,
+    mutationFn: kakaoLogin,
     onSuccess: ({accessToken, refreshToken}) => {
       setHeader('Authorization', `Bearer ${accessToken}`);
       setEncryptStorage(storageKeys.REFRESH_TOKEN, refreshToken);
@@ -53,16 +40,8 @@ function useLogin<T>(
   });
 }
 
-function useEmailLogin(mutationOptions?: UseMutationCustomOptions) {
-  return useLogin(postLogin, mutationOptions);
-}
-
-function useKakaoLogin(mutationOptions?: UseMutationCustomOptions) {
-  return useLogin(kakaoLogin, mutationOptions);
-}
-
 function useGetRefreshToken() {
-  const {data, error, isSuccess, isError} = useQuery({
+  const {data, isSuccess, isError} = useQuery({
     queryKey: [queryKeys.AUTH, queryKeys.GET_ACCESS_TOKEN],
     queryFn: getAccessToken,
     staleTime: numbers.ACCESS_TOKEN_REFRESH_TIME,
@@ -111,19 +90,15 @@ function useLogout(mutationOptions?: UseMutationCustomOptions) {
 }
 
 function useAuth() {
-  const signupMutation = useSignup();
   const refreshTokenQuery = useGetRefreshToken();
   const getProfileQuery = useGetProfile({
     enabled: refreshTokenQuery.isSuccess,
   });
   const isLogin = getProfileQuery.isSuccess;
-  const loginMutation = useEmailLogin();
   const kakaoLoginMutation = useKakaoLogin();
   const logoutMutation = useLogout();
 
   return {
-    signupMutation,
-    loginMutation,
     getProfileQuery,
     isLogin,
     logoutMutation,

@@ -1,11 +1,23 @@
 // 사용자가 가장먼저 마주하게 되는 로직들
 
-import AuthStackNavigator from './stack/AuthStackNavigator';
+import React from 'react';
+import {createStackNavigator} from '@react-navigation/stack';
 import MainBottomTab from './MainBottomTab';
-import useAuth from '../hooks/queries/useAuth';
+import ReviewScreen from '../screens/map/ReviewScreen';
+import {ReviewStackParamList} from '../types/common';
+import AuthStackNavigator from './stack/AuthStackNavigator';
+import {RootStackParamList} from '../types/common';
+
+const Stack = createStackNavigator<RootStackParamList>();
 
 function RootNavigator() {
-  return <MainBottomTab />;
+  return (
+    <Stack.Navigator screenOptions={{headerShown: false}}>
+      <Stack.Screen name="IndoorInfoScreen" component={MainBottomTab} />
+      <Stack.Screen name="ReviewScreen" component={ReviewScreen} />
+      <Stack.Screen name="Auth" component={AuthStackNavigator} />
+    </Stack.Navigator>
+  );
 }
 
 export default RootNavigator;

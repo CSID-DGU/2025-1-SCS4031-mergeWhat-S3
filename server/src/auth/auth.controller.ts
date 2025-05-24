@@ -18,10 +18,15 @@ import { AuthCredentialsDto } from './dto/auth-credential.dto';
 import { EditProfileDto } from './dto/edit-profile.dto';
 import { MarkerColor } from 'src/post/marker-color.enum';
 import { GetUser } from 'src/@common/decorators/get-user.decorator';
+import axios from 'axios';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private readonly configService: ConfigService,
+  ) {}
 
   @Post('/signup')
   signup(
@@ -79,20 +84,39 @@ export class AuthController {
     return this.authService.updateCategory(categories, user);
   }
 
+  // auth.controller.ts
+  @Get('auth/kakao')
+  async kakaoRedirect(@Query('code') code: string) {
+    // 1. Kakao에 access_token 요청
+    const tokenResponse = await axios.post(
+      'https://kauth.kakao.com/oauth/token',
+      null,
+      {
+        params: {
+          grant_type: 'authorization_code',
+          client_id: this.configService.get('KAKAO_REST_API_KEY'),
+          redirect_uri: 'http://192.168.219.104:3030/auth/kakao', // 실제 redirect URI
+          code,
+        },
+        headers: {
+          'Content-type': 'application/x-www-form-urlencoded;charset=utf-8',
+        },
+      },
+    );
+
+    const kakaoAccessToken = tokenResponse.data.access_token;
+
+    // 2. 기존 서비스 로직으로 위임
+    const jwtTokens = await this.authService.kakaoLogin({
+      token: kakaoAccessToken,
+    });
+
+    // 3. 클라이언트에 JWT 반환
+    return jwtTokens;
+  }
+
   @Post('/oauth/kakao')
   kakaoLogin(@Body() kakaoToken: { token: string }) {
     return this.authService.kakaoLogin(kakaoToken);
-  }
-
-  @Post('/oauth/apple')
-  appleLogin(
-    @Body()
-    appleIdentity: {
-      identityToken: string;
-      appId: string;
-      nickname: string | null;
-    },
-  ) {
-    return this.authService.appleLogin(appleIdentity);
   }
 }

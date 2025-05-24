@@ -4,6 +4,8 @@ import {
   UseQueryOptions,
   QueryKey,
 } from '@tanstack/react-query';
+import {NavigatorScreenParams} from '@react-navigation/native';
+import {AuthStackParamList} from '../navigations/stack/AuthStackNavigator';
 
 type ResponseError = AxiosError<{
   statusCode: number;
@@ -33,4 +35,18 @@ export type MainTabParamList = {
   Market: undefined;
   Community: undefined;
   MyPage: undefined;
+};
+
+export type ReviewStackParamList = {
+  IndoorInfoScreen: undefined;
+  ReviewScreen: {
+    storeName: string;
+    storeId: number;
+  };
+};
+
+export type RootStackParamList = {
+  IndoorInfoScreen: undefined;
+  ReviewScreen: {storeName: string; storeId: number};
+  Auth: NavigatorScreenParams<AuthStackParamList>;
 };

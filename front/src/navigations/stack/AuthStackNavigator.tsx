@@ -2,17 +2,13 @@
 import React from 'react';
 import {StyleSheet} from 'react-native';
 import {createStackNavigator} from '@react-navigation/stack';
-import AuthHomeScreen from '../../screens/auth/AuthHomeScreen';
-import LoginScreen from '../../screens/auth/LoginScreen';
-import KakaoLoginScreen from '../../screens/auth/KakaoLoginScreen';
-import SignupScreen from '../../screens/auth/SignupScreen';
+import AuthHomeScreen from '../../screens/auth/AuthHomeScreen'; // 카카오로그인 버튼 있는 화면
+import KakaoLoginScreen from '../../screens/auth/KakaoLoginScreen'; // 실제 카카오로그인 이루어지는 화면
 import {authNavigations} from '../../constants';
 import {kakaoLogin} from '../../api/auth';
 
 export type AuthStackParamList = {
   [authNavigations.AUTH_HOME]: undefined;
-  [authNavigations.LOGIN]: undefined;
-  [authNavigations.SIGNUP]: undefined;
   [authNavigations.KAKAO]: undefined;
 };
 
@@ -40,20 +36,6 @@ function AuthStackNavigator() {
         options={{
           headerTitle: ' ',
           headerShown: false,
-        }}
-      />
-      <Stack.Screen
-        name={authNavigations.LOGIN}
-        component={LoginScreen}
-        options={{
-          headerTitle: '로그인',
-        }}
-      />
-      <Stack.Screen
-        name={authNavigations.SIGNUP}
-        component={SignupScreen}
-        options={{
-          headerTitle: '회원가입',
         }}
       />
       <Stack.Screen

@@ -1,7 +1,8 @@
 // front/src/components/IndoorInfo/Around.tsx
 import React, {useEffect, useState} from 'react';
-import {View, Text, ActivityIndicator} from 'react-native';
+import {View, Text, ActivityIndicator, Image} from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
+import defaultImage from '../../assets/시장기본이미지.png';
 
 type Place = {
   id: string;
@@ -13,69 +14,53 @@ type Place = {
 
 type AroundProps = {
   type: '실내놀거리' | '관광지'; // 검색 키워드
+  latitude: number;
+  longitude: number;
 };
 
-const AroundInfo = ({type}: AroundProps) => {
+const AroundInfo = ({type, latitude, longitude}: AroundProps) => {
   const [places, setPlaces] = useState<Place[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Geolocation.getCurrentPosition(
-      async position => {
-        const {latitude, longitude} = position.coords;
+    console.log('🌐 REST API 호출 좌표:', latitude, longitude);
 
-        try {
-          const response = await fetch(
-            `https://dapi.kakao.com/v2/local/search/keyword.json?query=${type}&x=${longitude}&y=${latitude}&radius=1000&size=10`,
-            {
-              method: 'GET',
-              headers: {
-                Authorization: 'KakaoAK 3e4babfcb6814efcfdfd18c83c0e6c81',
-              },
+    const fetchPlaces = async () => {
+      try {
+        const response = await fetch(
+          `https://dapi.kakao.com/v2/local/search/keyword.json?query=${type}&x=${longitude}&y=${latitude}&radius=1000&size=10`,
+          {
+            method: 'GET',
+            headers: {
+              Authorization: 'KakaoAK 3e4babfcb6814efcfdfd18c83c0e6c81',
             },
+          },
+        );
+
+        const data = await response.json();
+        console.log(`✅ REST API 검색 결과 (${type}):`, data);
+
+        let results = data.documents || [];
+
+        // 필터링: 실내놀거리에서 '커피전문점' 제거
+        if (type === '실내놀거리') {
+          results = results.filter(
+            (item: any) =>
+              !item.category_name.startsWith('음식점 > 카페 > 커피전문점'),
           );
-
-          const data = await response.json();
-          console.log(`✅ REST API 검색 결과 (${type}):`, data);
-
-          if (Array.isArray(data.documents)) {
-            // 로그: 어떤 카테고리가 포함되어 있는지 먼저 확인
-            const startsWithCafeChain = data.documents.filter(
-              (item: {category_name: string}) =>
-                item.category_name.startsWith('음식점 > 카페 > 커피전문점'),
-            );
-
-            // 필터링
-            let results = data.documents;
-
-            if (type === '실내놀거리') {
-              results = results.filter(
-                (item: {category_name: string}) =>
-                  !item.category_name.startsWith('음식점 > 카페 > 커피전문점'),
-              );
-            }
-
-            setPlaces(results);
-          } else {
-            setPlaces([]);
-          }
-        } catch (err) {
-          console.error(`❌ ${type} 검색 실패:`, err);
-        } finally {
-          setLoading(false);
         }
-      },
-      err => {
-        console.error('❌ 위치 정보 가져오기 실패:', err);
+
+        setPlaces(results);
+      } catch (err) {
+        console.error(`❌ ${type} 검색 실패:`, err);
+        setPlaces([]);
+      } finally {
         setLoading(false);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 10000,
-      },
-    );
-  }, [type]);
+      }
+    };
+
+    fetchPlaces();
+  }, [type, latitude, longitude]);
 
   if (loading) {
     return <ActivityIndicator size="large" color="#000" />;
@@ -83,21 +68,55 @@ const AroundInfo = ({type}: AroundProps) => {
 
   return (
     <View style={{padding: 16}}>
-      <Text style={{fontSize: 16, fontWeight: 'bold', marginBottom: 10}}>
-        {type} 검색 결과
-      </Text>
       {places.length === 0 ? (
         <Text style={{color: '#888'}}>검색 결과가 없습니다.</Text>
       ) : (
-        places.map((place, index) => (
-          <View key={index} style={{marginBottom: 12}}>
-            <Text style={{fontWeight: 'bold'}}>{place.place_name}</Text>
-            <Text>{place.address_name}</Text>
-            <Text style={{fontSize: 12, color: '#999'}}>
-              거리: {(parseFloat(place.distance) / 1000).toFixed(1)} km
-            </Text>
-          </View>
-        ))
+        places.map((place, index) => {
+          const distanceKm = (parseFloat(place.distance) / 1000).toFixed(1);
+
+          // category_name 파싱
+          const category = place.category_name
+            ? place.category_name.split(' > ').slice(-2, -1)[0] ?? ''
+            : '';
+
+          return (
+            <View
+              key={index}
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                marginBottom: 20,
+                borderBottomWidth: 1,
+                borderColor: '#eee',
+                paddingBottom: 12,
+              }}>
+              <View style={{flex: 1, marginRight: 12}}>
+                <Text
+                  style={{fontWeight: 'bold', fontSize: 15, color: '#3366ff'}}>
+                  {place.place_name}
+                </Text>
+                {category ? (
+                  <Text style={{fontSize: 12, color: '#888', marginBottom: 4}}>
+                    {category}
+                  </Text>
+                ) : null}
+                <Text style={{fontSize: 12, color: '#f55'}}>
+                  {distanceKm}km
+                </Text>
+              </View>
+              <Image
+                source={defaultImage}
+                style={{
+                  width: 80,
+                  height: 80,
+                  borderRadius: 8,
+                }}
+                resizeMode="cover"
+              />
+            </View>
+          );
+        })
       )}
     </View>
   );

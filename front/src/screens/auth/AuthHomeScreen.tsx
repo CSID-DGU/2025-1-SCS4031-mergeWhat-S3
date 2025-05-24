@@ -31,12 +31,6 @@ function AuthHomeScreen({navigation}: AuthHomeScreenProps) {
             <Ionicons name={'chatbubble-sharp'} color={'#181500'} size={16} />
           }
         />
-
-        <CustomButton
-          label="이메일 로그인하기"
-          onPress={() => navigation.navigate(authNavigations.LOGIN)}
-          icon={undefined}
-        />
       </View>
     </SafeAreaView>
   );

@@ -1,5 +1,12 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {View, Text, TouchableOpacity, StyleSheet, Image} from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  Alert,
+} from 'react-native';
 import {WebView} from 'react-native-webview';
 import {
   fetchAllStores,
@@ -7,14 +14,26 @@ import {
   fetchStoresByCategory,
   StoreProduct,
 } from '../../api/market';
+import {fetchMarketsByKeyword} from '../../api/market';
 import Geolocation from '@react-native-community/geolocation';
 import {BottomSheetScrollView} from '@gorhom/bottom-sheet';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {fetchBusinessHourByStoreId, BusinessHour} from '../../api/market';
 import ParkingInfo from '../../components/IndoorInfo/Parking';
 import AroundInfo from '../../components/IndoorInfo/Around';
+import {getUltraSrtFcst, WeatherData} from '../../components/weather';
+import {
+  getWeatherIcon,
+  getWeatherRecommendation,
+} from '../../components/IndoorInfo/getWeatherIcon';
+import {useNavigation} from '@react-navigation/native';
+import {StackNavigationProp} from '@react-navigation/stack';
+import {ReviewStackParamList} from '../../types/common';
+import useAuth from '../../hooks/queries/useAuth';
+import {authNavigations} from '../../constants/navigations';
+import {AuthStackParamList} from '../../navigations/stack/AuthStackNavigator';
 
-const defaultImage = require('../../assets/시장기본이미지.jpg');
+const defaultImage = require('../../assets/시장기본이미지.png');
 const productCategories = ['농수산물', '먹거리', '옷', '혼수', '가맹점'];
 
 type Store = {
@@ -30,6 +49,8 @@ type Store = {
   contact?: string;
   indoor_name: string;
 };
+
+const emptyStars = require('../../assets/review_star.png');
 
 // 현재위치와 가게별 거리 계산
 const getDistanceFromLatLonInKm = (
@@ -51,6 +72,8 @@ const getDistanceFromLatLonInKm = (
   return (R * c).toFixed(1);
 };
 
+// - - - - - - - - - - - - - - - - - -
+
 const IndoorInfoSheet = ({
   polygonName,
   marketName,
@@ -58,6 +81,11 @@ const IndoorInfoSheet = ({
   polygonName: string | null;
   marketName: string;
 }) => {
+  type NavigationProp = StackNavigationProp<
+    ReviewStackParamList,
+    'IndoorInfoScreen'
+  >;
+  const navigation = useNavigation<any>();
   const [storeList, setStoreList] = useState<Store[]>([]);
   const webViewRef = useRef<WebView>(null);
   const [currentPosition, setCurrentPosition] = useState<{
@@ -71,6 +99,39 @@ const IndoorInfoSheet = ({
   );
   const [businessHours, setBusinessHours] = useState<BusinessHour[]>([]);
   const [isBusinessHourExpanded, setIsBusinessHourExpanded] = useState(false);
+
+  // 로그인 판별
+
+  const {isLogin: realLogin} = useAuth();
+  const isLogin = false;
+  useEffect(() => {
+    console.log('[🟢 로그인 상태]:', isLogin);
+  }, [isLogin]);
+
+  const handleReviewPress = () => {
+    if (!isLogin) {
+      Alert.alert(
+        '로그인이 필요합니다',
+        '리뷰를 작성하려면 먼저 로그인해주세요.',
+        [
+          {
+            text: '취소',
+            style: 'cancel',
+          },
+          {
+            text: '로그인하러 가기',
+            onPress: () =>
+              navigation.navigate('Auth', {
+                screen: authNavigations.AUTH_HOME,
+              }),
+          },
+        ],
+      );
+      return;
+    }
+
+    navigation.navigate('ReviewScreen');
+  };
 
   useEffect(() => {
     Geolocation.getCurrentPosition(
@@ -120,6 +181,34 @@ const IndoorInfoSheet = ({
     };
     loadBusinessHour();
   }, [selectedStore]);
+
+  const [selectedMarketCenter, setSelectedMarketCenter] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+
+  useEffect(() => {
+    const loadMarketCenter = async () => {
+      try {
+        const data = await fetchMarketsByKeyword(marketName); // 🔎 keyword = 시장명
+        const matched = data.find((m: any) => m.name === marketName);
+
+        if (matched && matched.center_lat && matched.center_lng) {
+          setSelectedMarketCenter({
+            latitude: matched.center_lat,
+            longitude: matched.center_lng,
+          });
+          console.log('[✅ 시장 좌표 설정 완료]', matched);
+        } else {
+          console.warn('[❌ 해당 시장 좌표 없음]');
+        }
+      } catch (err) {
+        console.error('❌ market 좌표 불러오기 실패:', err);
+      }
+    };
+
+    loadMarketCenter();
+  }, [marketName]);
 
   const getTodayBusinessHour = (): {status: string; time: string} => {
     const today = new Date();
@@ -216,6 +305,32 @@ const IndoorInfoSheet = ({
       }
     }
   };
+
+  const [weatherData, setWeatherData] = useState<WeatherData[] | null>(null);
+  const recommendation = weatherData
+    ? getWeatherRecommendation(weatherData)
+    : null;
+
+  useEffect(() => {
+    if (selectedCategory === '근처놀거리') {
+      Geolocation.getCurrentPosition(
+        async pos => {
+          const {latitude, longitude} = pos.coords;
+
+          try {
+            const data = await getUltraSrtFcst(latitude, longitude);
+            setWeatherData(data);
+          } catch (error) {
+            console.error('[❌ 날씨 API 에러]', error);
+          }
+        },
+        err => {
+          console.error('[❌ 위치 권한 오류]', err.message);
+        },
+        {enableHighAccuracy: true, timeout: 10000, maximumAge: 10000},
+      );
+    }
+  }, [selectedCategory]);
 
   const CategoryButton = ({
     label,
@@ -352,10 +467,38 @@ const IndoorInfoSheet = ({
               <View style={styles.storeInfoBox}>{renderProductList()}</View>
             )}
 
-            {selectedTab === 'review' && ( // 상세정보 중 '리뷰 탭'
-              <Text style={{color: '#aaa', marginTop: 20}}>
-                리뷰 준비 중입니다
-              </Text>
+            {/*  리뷰작성란  */}
+
+            {selectedTab === 'review' && (
+              <View style={{alignItems: 'center', marginTop: 24}}>
+                {/* 안내 문구 */}
+                <Text
+                  style={{
+                    fontSize: 14,
+                    color: '#333',
+                    marginBottom: 1,
+                    textAlign: 'center',
+                  }}>
+                  <Text style={{color: '#3366FF', fontWeight: 'bold'}}>
+                    {selectedStore.name}
+                  </Text>{' '}
+                  다녀오셨어요?{'\n\n'}방문 후기를 남겨주세요!
+                </Text>
+
+                {/* 별 버튼 */}
+                <TouchableOpacity
+                  onPress={handleReviewPress}
+                  style={{
+                    alignItems: 'center',
+                    marginTop: -28,
+                  }}>
+                  <Image
+                    source={emptyStars}
+                    style={{width: 250, height: 150}}
+                    resizeMode="contain"
+                  />
+                </TouchableOpacity>
+              </View>
             )}
           </View>
         ) : (
@@ -400,6 +543,18 @@ const IndoorInfoSheet = ({
               })}
             </View>
 
+            {/* 주변 정보 하위 타이틀 */}
+            {selectedCategory &&
+              !productCategories.includes(selectedCategory) && (
+                <Text style={[styles.sectionTitle, styles.marketTitle]}>
+                  {selectedCategory === '주차장' &&
+                    `${marketName} 근처 주차장 추천`}
+                  {selectedCategory === '화장실' && `${marketName} 근처 화장실`}
+                  {selectedCategory === '근처놀거리' &&
+                    `${marketName} 근처 관광지`}
+                </Text>
+              )}
+
             {selectedCategory &&
               productCategories.includes(selectedCategory) && (
                 <Text style={[styles.sectionTitle, styles.marketTitle]}>
@@ -407,12 +562,51 @@ const IndoorInfoSheet = ({
                 </Text>
               )}
 
-            {selectedCategory === '근처놀거리' && (
+            {selectedCategory === '근처놀거리' && weatherData && (
               <>
-                <AroundInfo type="실내놀거리" />
-                <AroundInfo type="관광지" />
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    marginBottom: 8,
+                  }}>
+                  <Image
+                    source={getWeatherIcon(weatherData)}
+                    style={{width: 22, height: 22, marginRight: 6}}
+                    resizeMode="contain"
+                  />
+                  <Text style={{fontSize: 14, marginRight: 4}}>서울특별시</Text>
+                  <Text style={{fontSize: 14, fontWeight: 'bold'}}>
+                    {weatherData.find(d => d.category === 'T1H')?.value ?? '-'}
+                    °C
+                  </Text>
+                </View>
+
+                <Text style={{fontSize: 13, color: '#666', marginBottom: 12}}>
+                  {recommendation?.message}
+                </Text>
               </>
             )}
+
+            {selectedCategory === '근처놀거리' &&
+              selectedMarketCenter &&
+              weatherData && (
+                <>
+                  {recommendation?.recommend === 'indoor' ? (
+                    <AroundInfo
+                      type="실내놀거리"
+                      latitude={selectedMarketCenter.latitude}
+                      longitude={selectedMarketCenter.longitude}
+                    />
+                  ) : (
+                    <AroundInfo
+                      type="관광지"
+                      latitude={selectedMarketCenter.latitude}
+                      longitude={selectedMarketCenter.longitude}
+                    />
+                  )}
+                </>
+              )}
 
             {selectedCategory === '주차장' && <ParkingInfo />}
 

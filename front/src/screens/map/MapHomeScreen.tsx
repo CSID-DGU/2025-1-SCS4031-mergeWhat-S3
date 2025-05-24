@@ -36,6 +36,7 @@ import {
 import {MainTabParamList} from '../../types/common';
 import {getUltraSrtFcst, WeatherData} from '../../components/weather';
 import {weatherIconMap} from '../../assets/weather/weatherImage';
+import useAuth from '../../hooks/queries/useAuth';
 
 async function requestLocationPermission() {
   if (Platform.OS === 'android') {
