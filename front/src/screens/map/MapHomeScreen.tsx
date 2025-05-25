@@ -26,7 +26,7 @@ import htmlContent from './kakaoHTML'; // 카카오맵API로 폴리곤 나눈 ht
 import Geolocation from '@react-native-community/geolocation';
 import {marketImageMap} from '../../assets/market/marketImages';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
-import IndoorInfoSheet from './IndoorInfoSheet';
+import IndoorInfoSheet from '../store/IndoorInfoSheet';
 import {BottomSheetBackdrop} from '@gorhom/bottom-sheet';
 import {BottomSheetDefaultBackdropProps} from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetBackdrop/types';
 import {

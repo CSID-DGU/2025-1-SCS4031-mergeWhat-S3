@@ -1,14 +1,12 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { PostModule } from './post/post.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ImageModule } from './image/image.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
-import { FavoriteModule } from './favorite/favorite.module';
 import { MarketModule } from './market/market.module';
 import { StoreModule } from './store/store.module';
+import { StoreReviewModule } from './store_review/store_review.module';
 
 @Module({
   imports: [
@@ -26,13 +24,13 @@ import { StoreModule } from './store/store.module';
     }),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'uploads'),
+      serveRoot: '/uploads',
     }),
-    PostModule,
+
     AuthModule,
-    ImageModule,
-    FavoriteModule,
     MarketModule,
     StoreModule,
+    StoreReviewModule,
   ],
   providers: [ConfigService],
 })

@@ -31,7 +31,8 @@ import {StackNavigationProp} from '@react-navigation/stack';
 import {ReviewStackParamList} from '../../types/common';
 import useAuth from '../../hooks/queries/useAuth';
 import {authNavigations} from '../../constants/navigations';
-import {AuthStackParamList} from '../../navigations/stack/AuthStackNavigator';
+import {CommonActions} from '@react-navigation/native';
+import ReviewList from '../../components/IndoorInfo/ReviewList';
 
 const defaultImage = require('../../assets/시장기본이미지.png');
 const productCategories = ['농수산물', '먹거리', '옷', '혼수', '가맹점'];
@@ -100,10 +101,14 @@ const IndoorInfoSheet = ({
   const [businessHours, setBusinessHours] = useState<BusinessHour[]>([]);
   const [isBusinessHourExpanded, setIsBusinessHourExpanded] = useState(false);
 
+  const [averageRating, setAverageRating] = useState<number | null>(null);
+
   // 로그인 판별
 
+  // 테스트용!!!
   const {isLogin: realLogin} = useAuth();
-  const isLogin = false;
+  const isLogin = true;
+
   useEffect(() => {
     console.log('[🟢 로그인 상태]:', isLogin);
   }, [isLogin]);
@@ -130,7 +135,10 @@ const IndoorInfoSheet = ({
       return;
     }
 
-    navigation.navigate('ReviewScreen');
+    navigation.navigate('ReviewScreen', {
+      storeName: selectedStore?.name,
+      storeId: selectedStore?.id,
+    });
   };
 
   useEffect(() => {
@@ -349,7 +357,7 @@ const IndoorInfoSheet = ({
   );
 
   const renderProductList = () => (
-    <View style={{marginTop: 16}}>
+    <View style={{marginTop: 10}}>
       <Text style={styles.menuTitle}>판매 품목</Text>
       {productList.length > 0 ? (
         productList.map((item, idx) => (
@@ -453,13 +461,61 @@ const IndoorInfoSheet = ({
                   <Text style={styles.storeContact}>
                     📞 {selectedStore.contact || '전화번호 없음'}
                   </Text>
+
                   {selectedStore.is_affiliate && (
                     <Text style={[styles.storeAffiliate, {marginTop: 17}]}>
                       지역화폐 가맹점
                     </Text>
                   )}
                 </View>
+
+                <TouchableOpacity
+                  onPress={() =>
+                    navigation.dispatch(
+                      CommonActions.navigate({
+                        name: 'EditInfoScreen',
+                        params: {
+                          screen: 'EditScreen',
+                          params: {
+                            storeName: selectedStore.name,
+                            storeId: selectedStore.id,
+                            storeCategory: selectedStore.category,
+                            storeAddress: selectedStore.address,
+                            storeContact: selectedStore.contact,
+                            storeBusinessHours: businessHours,
+                          },
+                        },
+                      }),
+                    )
+                  }>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      marginTop: 30,
+                      marginRight: 10,
+                    }}>
+                    <Text
+                      style={{color: '#3366FF', fontSize: 13, marginRight: 4}}>
+                      ❔
+                    </Text>
+                    <Text
+                      style={{
+                        color: '#3366FF',
+                        fontSize: 14,
+                        fontWeight: '500',
+                        textDecorationLine: 'underline',
+                      }}>
+                      정보 수정 제안하기
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+
                 {renderProductList()}
+                <View style={{marginLeft: -10}}>
+                  {/* 평균 점수 + 별 아이콘 */}
+                  <ReviewList storeId={selectedStore.id} showAverage={true} />
+                </View>
               </View>
             )}
 
@@ -470,7 +526,7 @@ const IndoorInfoSheet = ({
             {/*  리뷰작성란  */}
 
             {selectedTab === 'review' && (
-              <View style={{alignItems: 'center', marginTop: 24}}>
+              <View style={{marginTop: 24}}>
                 {/* 안내 문구 */}
                 <Text
                   style={{
@@ -490,14 +546,22 @@ const IndoorInfoSheet = ({
                   onPress={handleReviewPress}
                   style={{
                     alignItems: 'center',
-                    marginTop: -28,
+                    marginTop: 13,
                   }}>
-                  <Image
-                    source={emptyStars}
-                    style={{width: 250, height: 150}}
-                    resizeMode="contain"
-                  />
+                  <Text
+                    style={{
+                      fontSize: 30,
+                      color: '#FFD700', // 노란 테두리 느낌
+                      letterSpacing: 4,
+                      marginBottom: 20,
+                    }}>
+                    ☆☆☆☆☆
+                  </Text>
                 </TouchableOpacity>
+
+                {/* 리뷰 목록 컴포넌트 추가 */}
+
+                <ReviewList storeId={selectedStore.id} showAverage={true} />
               </View>
             )}
           </View>

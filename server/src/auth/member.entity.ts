@@ -1,6 +1,5 @@
-import { Favorite } from 'src/favorite/favorite.entity';
-import { MarkerColor } from 'src/post/marker-color.enum';
 import { Post } from 'src/post/post.entity';
+import { StoreReview } from 'src/store_review/store_review.entity';
 import {
   BaseEntity,
   Column,
@@ -13,7 +12,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-@Entity()
+@Entity('member')
 @Unique(['email'])
 export class User extends BaseEntity {
   @PrimaryGeneratedColumn()
@@ -37,21 +36,6 @@ export class User extends BaseEntity {
   @Column({ nullable: true })
   kakaoImageUri?: string;
 
-  @Column({ nullable: true, default: '' })
-  [MarkerColor.RED]: string;
-
-  @Column({ nullable: true, default: '' })
-  [MarkerColor.YELLOW]: string;
-
-  @Column({ nullable: true, default: '' })
-  [MarkerColor.GREEN]: string;
-
-  @Column({ nullable: true, default: '' })
-  [MarkerColor.BLUE]: string;
-
-  @Column({ nullable: true, default: '' })
-  [MarkerColor.PURPLE]: string;
-
   @CreateDateColumn()
   createdAt: Date;
 
@@ -64,9 +48,6 @@ export class User extends BaseEntity {
   @Column({ nullable: true })
   hashedRefreshToken?: string;
 
-  @OneToMany(() => Post, (post) => post.user, { eager: false })
-  post: Post[];
-
-  @OneToMany(() => Favorite, (favorite) => favorite.user)
-  favorites: Favorite[];
+  @OneToMany(() => StoreReview, (review) => review.user)
+  reviews: StoreReview[];
 }

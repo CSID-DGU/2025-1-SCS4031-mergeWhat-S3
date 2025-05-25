@@ -22,6 +22,7 @@ import useAuth from '../../hooks/queries/useAuth';
 import {authNavigations} from '../../constants/navigations';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {AuthStackParamList} from '../../navigations/stack/AuthStackNavigator';
+import {submitReview} from '../../api/post';
 
 const emptyStars = require('../../assets/review_star.png');
 
@@ -93,13 +94,20 @@ const ReviewScreen = ({route}: {route: ReviewRouteProp}) => {
     setRating(selectedRating);
   };
 
-  const handleSubmit = () => {
-    if (!content || !file || rating === 0) {
-      Alert.alert('별점, 내용, 사진을 모두 입력해주세요.');
+  const handleSubmit = async () => {
+    if (!content || rating === 0) {
+      Alert.alert('별점과 내용을 모두 입력해주세요.');
       return;
     }
-    Alert.alert('작성 완료', '게시물이 작성되었습니다.');
-    // 실제 등록 로직 추가 필요
+
+    try {
+      await submitReview(storeId, rating, content, file?.uri);
+      Alert.alert('리뷰가 성공적으로 등록되었습니다.');
+      navigation.goBack();
+    } catch (err) {
+      console.error('❌ 리뷰 전송 실패:', err);
+      Alert.alert('리뷰 등록 실패', '잠시 후 다시 시도해주세요.');
+    }
   };
 
   return (

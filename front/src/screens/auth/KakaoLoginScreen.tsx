@@ -18,6 +18,12 @@ import useAuth from '../../hooks/queries/useAuth';
 import {colors} from '../../constants';
 
 const REDIRECT_URI = `http://192.168.219.104:3030/auth/kakao`;
+/*여기서 192...104부분은, 개인 pc에 대한 ip주소라 터미널에서 "ipconfig" 입력하셨을때 
+나오는 'IPv4 Address' 결과로 바꿔주셔야 합니다!
+-> 그런 다음 카카오 디벨로퍼의 '카카오로그인->Redirect URI 부분에서 위 링크를
+추가해줘야 해요. 근데 제 카카오키를 사용하실거면 그냥 수정된 const REDIRECT_URI 
+알려주세요! 제 카카오 디벨로퍼에 추가해놓겠습니다. */
+
 const INJECTED_JAVASCRIPT = "window.ReactNativeWebView.postMessage('')";
 
 function KakaoLoginScreen() {
@@ -40,6 +46,7 @@ function KakaoLoginScreen() {
       params: {
         grant_type: 'authorization_code',
         client_id: Config.KAKAO_REST_API_KEY,
+        // .env파일에 명시
         redirect_uri: REDIRECT_URI,
         code,
       },

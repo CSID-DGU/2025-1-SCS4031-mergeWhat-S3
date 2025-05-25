@@ -1,6 +1,7 @@
 import { BusinessHour } from 'src/business_hour/bh.entity';
 import { Market } from 'src/market/market.entity';
 import { StoreProduct } from 'src/store_product/store_product.entity';
+import { StoreReview } from 'src/store_review/store_review.entity';
 import {
   BaseEntity,
   Column,
@@ -68,4 +69,7 @@ export class Store extends BaseEntity {
 
   @OneToMany(() => StoreProduct, (product) => product.store)
   products: StoreProduct[];
+
+  @OneToMany(() => StoreReview, (review) => review.store)
+  reviews: StoreReview[];
 }

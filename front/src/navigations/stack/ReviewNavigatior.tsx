@@ -1,6 +1,6 @@
 import {createStackNavigator} from '@react-navigation/stack';
-import IndoorInfoSheet from '../../screens/map/IndoorInfoSheet';
-import ReviewScreen from '../../screens/map/ReviewScreen';
+import IndoorInfoSheet from '../../screens/store/IndoorInfoSheet';
+import ReviewScreen from '../../screens/store/ReviewScreen';
 import {ReviewStackParamList} from '../../types/common';
 
 const Stack = createStackNavigator<ReviewStackParamList>();

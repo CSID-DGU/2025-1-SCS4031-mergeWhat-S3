@@ -15,10 +15,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 
-import { User } from './user.entity';
+import { User } from './member.entity';
 import { AuthCredentialsDto } from './dto/auth-credential.dto';
 import { EditProfileDto } from './dto/edit-profile.dto';
-import { MarkerColor } from 'src/post/marker-color.enum';
 
 @Injectable()
 export class AuthService {
@@ -177,40 +176,6 @@ export class AuthService {
         '탈퇴할 수 없습니다. 남은 데이터가 존재하는지 확인해주세요.',
       );
     }
-  }
-
-  async updateCategory(
-    categories: Record<keyof MarkerColor, string>,
-    user: User,
-  ) {
-    const { RED, YELLOW, BLUE, GREEN, PURPLE } = MarkerColor;
-
-    if (
-      !Object.keys(categories).every((color: MarkerColor) =>
-        [RED, YELLOW, BLUE, GREEN, PURPLE].includes(color),
-      )
-    ) {
-      throw new BadRequestException('유효하지 않은 카테고리입니다.');
-    }
-
-    user[RED] = categories[RED];
-    user[YELLOW] = categories[YELLOW];
-    user[BLUE] = categories[BLUE];
-    user[GREEN] = categories[GREEN];
-    user[PURPLE] = categories[PURPLE];
-
-    try {
-      await this.userRepository.save(user);
-    } catch (error) {
-      console.log(error);
-      throw new InternalServerErrorException(
-        '카테고리 수정 도중 에러가 발생했습니다.',
-      );
-    }
-
-    const { password, hashedRefreshToken, ...rest } = user;
-
-    return { ...rest };
   }
 
   async kakaoLogin(kakaoToken: { token: string }) {

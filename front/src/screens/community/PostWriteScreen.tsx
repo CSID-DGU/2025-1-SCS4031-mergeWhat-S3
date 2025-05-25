@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -10,19 +10,28 @@ import {
   Alert,
 } from 'react-native';
 import {launchImageLibrary} from 'react-native-image-picker';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+
+const categoryOptions = ['자유게시판', '농수산물', '먹거리', '옷'];
 
 const PostWriteScreen = () => {
   const navigation = useNavigation();
+  const route = useRoute();
+  const initialCategory =
+    (route.params as {defaultCategory?: string})?.defaultCategory || '';
 
   const [title, setTitle] = useState('');
-  const [price, setPrice] = useState('');
-  const [rate, setRate] = useState('');
-  const [category, setCategory] = useState('');
   const [content, setContent] = useState('');
   const [preview, setPreview] = useState('');
   const [file, setFile] = useState<any>(null);
+  const [category, setCategory] = useState(initialCategory);
+
+  useEffect(() => {
+    if (initialCategory) {
+      setCategory(initialCategory);
+    }
+  }, [initialCategory]);
 
   const handleImagePick = () => {
     launchImageLibrary({mediaType: 'photo', quality: 0.8}, response => {
@@ -48,7 +57,7 @@ const PostWriteScreen = () => {
   };
 
   const handleSubmit = () => {
-    if (!title || !price || !rate || !category || !content || !file) {
+    if (!title || !category || !content || !file) {
       Alert.alert('모든 항목을 입력해주세요.');
       return;
     }
@@ -59,7 +68,7 @@ const PostWriteScreen = () => {
 
   return (
     <View style={{flex: 1, backgroundColor: '#fff'}}>
-      {/* 🔙 헤더 */}
+      {/* 헤더 */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="chevron-back" size={28} color="black" />
@@ -87,22 +96,35 @@ const PostWriteScreen = () => {
           ) : null}
         </View>
 
-        {/* 입력 항목들 */}
         <View style={styles.formSection}>
+          <Text style={styles.label}>카테고리</Text>
+          <View style={styles.categoryOptions}>
+            {categoryOptions.map(option => (
+              <TouchableOpacity
+                key={option}
+                style={[
+                  styles.categoryOption,
+                  category === option && styles.categorySelected,
+                ]}
+                onPress={() => setCategory(option)}>
+                <Text
+                  style={
+                    category === option
+                      ? styles.categorySelectedText
+                      : styles.categoryText
+                  }>
+                  {option}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
           <Text style={styles.label}>제목</Text>
           <TextInput
             style={styles.input}
             value={title}
-            onChangeText={text => setTitle(text)}
+            onChangeText={setTitle}
             placeholder="제목을 입력하세요"
-          />
-
-          <Text style={styles.label}>카테고리</Text>
-          <TextInput
-            style={styles.input}
-            value={category}
-            onChangeText={setCategory}
-            placeholder="리뷰 , 정보/질문"
           />
 
           <Text style={styles.label}>내용</Text>
@@ -115,7 +137,6 @@ const PostWriteScreen = () => {
           />
         </View>
 
-        {/* 하단 여백 확보 + 버튼 아래 고정 */}
         <View style={{marginTop: 40, marginBottom: 80}}>
           <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
             <Text style={styles.submitButtonText}>글 작성하기</Text>
@@ -136,13 +157,11 @@ const styles = StyleSheet.create({
     borderBottomColor: '#eee',
     backgroundColor: '#fff',
   },
-
   headerTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     marginLeft: 8,
   },
-
   container: {
     padding: 20,
     backgroundColor: '#fff',
@@ -190,6 +209,31 @@ const styles = StyleSheet.create({
   textarea: {
     height: 250,
     textAlignVertical: 'top',
+  },
+  categoryOptions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 16,
+    gap: 8,
+  },
+  categoryOption: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 20,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  categoryText: {
+    fontSize: 14,
+    color: '#333',
+  },
+  categorySelected: {
+    backgroundColor: '#E0E8FF',
+    borderColor: '#3366FF',
+  },
+  categorySelectedText: {
+    color: '#3366FF',
+    fontWeight: '600',
   },
   submitButton: {
     backgroundColor: '#3366FF',

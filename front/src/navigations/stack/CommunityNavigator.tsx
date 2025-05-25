@@ -2,7 +2,7 @@
 import {createStackNavigator} from '@react-navigation/stack';
 import PostListScreen from '../../screens/community/PostListScreen';
 import PostWriteScreen from '../../screens/community/PostWriteScreen';
-import IndoorInfoSheet from '../../screens/map/IndoorInfoSheet';
+import IndoorInfoSheet from '../../screens/store/IndoorInfoSheet';
 
 const Stack = createStackNavigator();
 

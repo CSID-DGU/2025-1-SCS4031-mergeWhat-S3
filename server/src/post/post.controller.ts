@@ -1,80 +1,39 @@
 import {
-  Body,
   Controller,
-  Delete,
   Get,
+  Post as HttpPost,
+  Body,
   Param,
-  ParseIntPipe,
-  Patch,
-  Post,
   Query,
-  UseGuards,
-  UsePipes,
-  ValidationPipe,
 } from '@nestjs/common';
 import { PostService } from './post.service';
-import { CreatePostDto } from './dto/create-post.dto';
-import { AuthGuard } from '@nestjs/passport';
-import { GetUser } from 'src/@common/decorators/get-user.decorator';
-import { User } from 'src/auth/user.entity';
+import { Post as PostEntity } from './post.entity';
 
-@Controller()
-@UseGuards(AuthGuard())
+@Controller('posts')
 export class PostController {
-  constructor(private postService: PostService) {}
+  constructor(private readonly postService: PostService) {}
 
-  @Get('/markers/my')
-  getAllMarkers(@GetUser() user: User) {
-    return this.postService.getAllMarkers(user);
+  // 전체 게시글 조회
+  @Get()
+  getAll(): Promise<PostEntity[]> {
+    return this.postService.findAll();
   }
 
-  @Get('/posts/my')
-  getPosts(@Query('page') page: number, @GetUser() user: User) {
-    return this.postService.getMyPosts(page, user);
+  // 게시판 타입별 조회
+  @Get('by-type')
+  getByType(@Query('type') type: string): Promise<PostEntity[]> {
+    return this.postService.findByBoardType(type);
   }
 
-  @Get('/posts/:id')
-  getPostById(@Param('id', ParseIntPipe) id: number, @GetUser() user: User) {
-    return this.postService.getPostById(id, user);
+  // 단일 게시글 조회
+  @Get(':id')
+  getById(@Param('id') id: number): Promise<PostEntity> {
+    return this.postService.findOne(id);
   }
 
-  @Post('/posts')
-  @UsePipes(ValidationPipe)
-  createPost(@Body() createPostDto: CreatePostDto, @GetUser() user: User) {
-    return this.postService.createPost(createPostDto, user);
-  }
-
-  @Delete('/posts/:id')
-  deletePost(@Param('id', ParseIntPipe) id: number, @GetUser() user: User) {
-    return this.postService.deletePost(id, user);
-  }
-
-  @Patch('/posts/:id')
-  @UsePipes(ValidationPipe)
-  updatePost(
-    @Param('id', ParseIntPipe) id: number,
-    @Body()
-    updatePostDto: Omit<CreatePostDto, 'latitude' | 'longitude' | 'address'>,
-    @GetUser() user: User,
-  ) {
-    return this.postService.updatePost(id, updatePostDto, user);
-  }
-
-  @Get('/posts')
-  getPostsByMonth(
-    @Query('year') year: number,
-    @Query('month') month: number,
-    @GetUser() user: User,
-  ) {
-    return this.postService.getPostsByMonth(year, month, user);
-  }
-
-  @Get('/posts/my/search')
-  searchMyPostsByTitleAndAddress(
-    @Query('query') query: string,
-    @Query('page') page: number,
-    @GetUser() user: User,
-  ) {
-    return this.postService.searchMyPostsByTitleAndAddress(query, page, user);
+  // 게시글 등록
+  @HttpPost()
+  createPost(@Body() body: Partial<PostEntity>): Promise<PostEntity> {
+    return this.postService.create(body);
   }
 }

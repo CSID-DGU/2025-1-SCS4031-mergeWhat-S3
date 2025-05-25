@@ -1,74 +1,39 @@
 import {
-  BaseEntity,
-  Column,
-  CreateDateColumn,
-  DeleteDateColumn,
   Entity,
-  ManyToOne,
-  OneToMany,
   PrimaryGeneratedColumn,
-  UpdateDateColumn,
+  Column,
+  ManyToOne,
+  CreateDateColumn,
+  JoinColumn,
 } from 'typeorm';
+import { User } from 'src/auth/member.entity'; // 실제 User entity 경로에 맞게 수정
 
-import { MarkerColor } from './marker-color.enum';
-import { ColumnNumericTransformer } from 'src/@common/transformers/numeric.transformer';
-import { User } from 'src/auth/user.entity';
-import { Image } from 'src/image/image.entity';
-import { Favorite } from 'src/favorite/favorite.entity';
+export type BoardType = 'produce' | 'free' | 'food' | 'fashion';
 
-@Entity()
-export class Post extends BaseEntity {
-  @PrimaryGeneratedColumn()
+@Entity('post')
+export class Post {
+  @PrimaryGeneratedColumn('increment')
   id: number;
 
-  @Column({
-    type: 'datetime',
-    transformer: new ColumnNumericTransformer(),
-  })
-  latitude: number;
-
-  @Column({
-    type: 'datetime',
-    transformer: new ColumnNumericTransformer(),
-  })
-  longitude: number;
-
   @Column()
-  color: MarkerColor;
+  user_id: number;
 
-  @Column()
-  address: string;
-
-  @Column()
-  title: string;
-
-  @Column()
-  description: string;
-
-  @Column({
-    type: 'datetime',
-    default: () => 'CURRENT_TIMESTAMP',
-  })
-  date: Date;
-
-  @Column()
-  score: number;
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
-
-  @DeleteDateColumn()
-  deletedAt: Date | null;
-
-  @ManyToOne(() => User, (user) => user.post, { eager: false })
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'user_id' }) // FK 연결
   user: User;
 
-  @OneToMany(() => Image, (image) => image.post)
-  images: Image[];
+  @Column({ type: 'varchar', length: 255 })
+  title: string;
 
-  @OneToMany(() => Favorite, (favorite) => favorite.post)
-  favorites: Favorite[];
+  @Column({ type: 'text' })
+  content: string;
+
+  @CreateDateColumn({ type: 'timestamp' })
+  created_at: Date;
+
+  @Column({
+    type: 'enum',
+    enum: ['produce', 'free', 'food', 'fashion'],
+  })
+  board_type: BoardType;
 }
