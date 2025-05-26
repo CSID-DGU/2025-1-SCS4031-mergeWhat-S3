@@ -41,6 +41,10 @@ public enum ErrorCode {
     // 404: 리소스를 찾을 수 없음 (Not Found)
     NOT_FOUND_MEMBER(40401, HttpStatus.NOT_FOUND, "회원이 존재하지 않습니다."),
     NOT_FOUND_MARKET(40402, HttpStatus.NOT_FOUND, "시장이 존재하지 않습니다."),
+    NOT_FOUND_CATEGORY(40403, HttpStatus.NOT_FOUND, "카테고리가 존재하지 않습니다."),
+    NOT_FOUND_STORE(40404, HttpStatus.NOT_FOUND, "가게가 존재하지 않습니다."),
+    NOT_FOUND_POST(40405, HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."),
+
     // 429: 요청 과다 (Too Many Requests)
     TOO_MANY_REQUESTS(42900, HttpStatus.TOO_MANY_REQUESTS, "요청 횟수가 너무 많습니다. 잠시 후 다시 시도해 주세요."),
 

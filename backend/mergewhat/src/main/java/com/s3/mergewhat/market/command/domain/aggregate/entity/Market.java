@@ -6,11 +6,15 @@ import lombok.*;
 @Entity
 @Table(name = "market")
 @Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class Market {
+
+    public void update(String name, String field) {
+        this.name = name;
+        this.field = field;
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

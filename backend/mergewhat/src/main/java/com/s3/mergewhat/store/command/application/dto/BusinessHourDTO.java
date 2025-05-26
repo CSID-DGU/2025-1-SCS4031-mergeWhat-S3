@@ -12,6 +12,8 @@ import java.time.LocalTime;
 @Builder
 public class BusinessHourDTO {
     private Long id;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long storeId;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING)

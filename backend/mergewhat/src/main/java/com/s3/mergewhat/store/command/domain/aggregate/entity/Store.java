@@ -1,5 +1,6 @@
 package com.s3.mergewhat.store.command.domain.aggregate.entity;
 
+import com.s3.mergewhat.market.command.domain.aggregate.entity.Market;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,26 +19,39 @@ public class Store {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "market_id", nullable = false)
+    private Market market;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @Column(name = "category_id")
+    private Category category;
+
+    @Column(nullable = false)
     private String name;
+
+    @Column(nullable = false)
     private String address;
+
+    @Column(nullable = false)
     private String contact;
 
-    @Column(name = "is_affiliate")
+    @Column(name = "is_affiliate", nullable = false)
     private Boolean isAffiliate;
 
-    @Column(name = "market_id")
-    private Long marketId;
+    @Column(name = "indoor_name", nullable = false)
+    private String indoorName;
 
-    @Column(name = "category_id")
-    private Long categoryId;
 
-    public void updateBasicInfo(String name, String address, String contact,
-                                boolean isAffiliate, Long marketId, Long categoryId) {
-        this.name = name;
-        this.address = address;
-        this.contact = contact;
-        this.isAffiliate = isAffiliate;
-        this.marketId = marketId;
-        this.categoryId = categoryId;
+    public void update(Market market, Category category, String name, String address,
+                       String contact, Boolean isAffiliate, String indoorName ) {
+
+        if (market != null && !market.equals(this.market)) this.market = market;
+        if (category != null && !category.equals(this.category)) this.category = category;
+        if (name != null && !name.equals(this.name)) this.name = name;
+        if (address != null && !address.equals(this.address)) this.address = address;
+        if (contact != null && !contact.equals(this.contact)) this.contact = contact;
+        if (this.isAffiliate != isAffiliate) this.isAffiliate = isAffiliate;
+        if (indoorName != null && !indoorName.equals(this.indoorName)) this.indoorName = indoorName;
     }
 }

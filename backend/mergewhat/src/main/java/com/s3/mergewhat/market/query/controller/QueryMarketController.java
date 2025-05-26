@@ -13,7 +13,7 @@ public class QueryMarketController {
     private final QueryMarketService queryMarketService;
 
     // id로 조회
-    @GetMapping("/{id}")
+    @GetMapping("/query/{id}")
     public ResponseDTO<?> getMarket(@PathVariable Long id) {
         return ResponseDTO.ok(queryMarketService.getById(id));
     }

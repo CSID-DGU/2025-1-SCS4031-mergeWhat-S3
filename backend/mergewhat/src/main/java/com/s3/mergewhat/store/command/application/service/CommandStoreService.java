@@ -1,12 +1,14 @@
 package com.s3.mergewhat.store.command.application.service;
 
 import com.s3.mergewhat.store.command.application.dto.StoreDetailDTO;
+import com.s3.mergewhat.store.command.domain.vo.RequestStoreVO;
+import com.s3.mergewhat.store.command.domain.vo.ResponseStoreVO;
 
 public interface CommandStoreService {
 
-    StoreDetailDTO create(StoreDetailDTO dto);
+    ResponseStoreVO create(RequestStoreVO request);
 
-//    StoreDetailDTO update(Long id, StoreDetailDTO dto);
-//
-//    void delete(Long id);
+    ResponseStoreVO update(Long id, RequestStoreVO request);
+
+    ResponseStoreVO delete(Long id);
 }
