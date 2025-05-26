@@ -25,6 +25,9 @@ public class SecurityConfig {
                 .csrf(httpSecurity -> httpSecurity.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/member/**").permitAll()
+                        // 테스트를 위한 모든 api 접근 허용
+                        .requestMatchers("/api/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(
