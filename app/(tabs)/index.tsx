@@ -27,10 +27,17 @@ export default function IndexScreen() {
   const [placeList, setPlaceList] = useState<string[]>([]);
   const [selectIndex, setSelectIndex] = useState<number | undefined>(undefined);
   const [parkingInfoMap, setParkingInfoMap] = useState<
-    Record<string, { free: string; total: string; lat: number; lng: number }>
+    Record<string, {
+      free: string;
+      total: string;
+      lat: number;
+      lng: number;
+      prkCrg?: string;
+      addCrg?: string;
+      addUnit?: string;
+    }>
   >({});
-  const [sortType, setSortType] = useState<'잔여 주차면수' | '거리순'>('잔여 주차면수');
-  const sortOptions = ['잔여 주차면수'];
+  const [sortType, setSortType] = useState<'잔여 주차면수' | '거리순' | '기본 요금순' | '추가 요금순'>('잔여 주차면수');
   const [mode, setMode] = useState<'search' | 'parking'>('search');
   const [selectName, setSelectName] = useState<string | undefined>(undefined);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number; } | null>(null);
@@ -168,6 +175,7 @@ export default function IndexScreen() {
           total: info?.total,
         };
       })
+      // 요금순 정렬 로직 확장
       .sort((a, b) => {
         if (sortType === '잔여 주차면수') {
           const aFree = Number(parkingInfoMap[a.name]?.free ?? 0);
@@ -175,9 +183,21 @@ export default function IndexScreen() {
           return bFree - aFree;
         } else if (sortType === '거리순') {
           return (a.distance ?? Infinity) - (b.distance ?? Infinity);
+        } else if (sortType === '기본 요금순') {
+          const aCrg = Number(parkingInfoMap[a.name]?.prkCrg ?? Infinity);
+          const bCrg = Number(parkingInfoMap[b.name]?.prkCrg ?? Infinity);
+          return aCrg - bCrg;
+        } else if (sortType === '추가 요금순') {
+          const getRate = (name: string) => {
+            const addCrg = Number(parkingInfoMap[name]?.addCrg);
+            const addUnit = Number(parkingInfoMap[name]?.addUnit);
+            return (addCrg && addUnit) ? addCrg / addUnit : Infinity;
+          };
+          return getRate(a.name) - getRate(b.name);
         }
         return 0;
       });
+
   }, [placeList, sortType, parkingInfoMap, userLocation]);
 
 
@@ -287,7 +307,7 @@ export default function IndexScreen() {
                   </Button>
                 }
               >
-                {['잔여 주차면수', '거리순'].map(option => (
+                {['잔여 주차면수', '거리순', '기본 요금순', '추가 요금순'].map(option => (
                   <Menu.Item
                     key={option}
                     onPress={() => {
@@ -297,6 +317,7 @@ export default function IndexScreen() {
                     title={option}
                   />
                 ))}
+
               </Menu>
             </View>
           )}
@@ -328,15 +349,33 @@ export default function IndexScreen() {
                       <Text style={styles.parkingTitle}>{item.name}</Text>
                       <Text style={styles.parkingSubtitle}>공영주차장</Text>
                       <Text style={styles.parkingDesc}>
-                        {item.free ? `잔여면수 ${item.free}면 / 총면수 ${item.total}면` : '정보 없음'}
+                        {item.free ? `잔여면수 ${item.free}면 / 총 ${item.total}면` : '정보 없음'}
                       </Text>
+
+                      <View style={{ flexDirection: 'row', marginBottom: 5 }}>
+                        <Text style={{ fontSize: 12, color: '#666', marginRight: 8 }}>
+                          {info?.prkCrg != null && !isNaN(Number(info.prkCrg))
+                            ? `기본요금: ${info.prkCrg}원`
+                            : '요금 정보 없음'}
+                        </Text>
+
+                        {info?.addCrg != null && info?.addUnit != null &&
+                          !isNaN(Number(info.addCrg)) && !isNaN(Number(info.addUnit)) && (
+                            <Text style={{ fontSize: 12, color: '#888' }}>
+                              추가요금: {info.addCrg}원 / {info.addUnit}분
+                            </Text>
+                          )}
+                      </View>
+
+
+
                       <View style={styles.parkingMeta}>
                         <Text style={styles.distanceText}>
                           {item.distance ? `${(item.distance / 1000).toFixed(1)}km` : '거리정보 없음'}
                         </Text>
-
                       </View>
                     </View>
+
                   </View>
                 </TouchableOpacity>
 

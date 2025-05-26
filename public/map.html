@@ -158,7 +158,6 @@
 
                 const list = Object.entries(groups).map(([name, items]) => {
                     const total = items.reduce((sum, it) => sum + (Number(it.TPKCT) || 0), 0);
-
                     const used = items.reduce((sum, it) => {
                         const code = it.PKLT_CD;
                         if (usedSet.has(code)) return sum;
@@ -168,15 +167,39 @@
 
                     const lat = parseFloat(items[0].LAT);
                     const lng = parseFloat(items[0].LOT);
-                    return { name, lat, lng, info: { free: total - used, total } };
+                    const prkCrg = Number(items[0].PRK_CRG); // 기본 요금
+                    const addCrg = items[0].ADD_CRG;             // 추가 요금
+                    const addUnit = items[0].ADD_UNIT_TM_MNT;    // 추가 시간 단위
+
+
+                    return {
+                        name,
+                        lat,
+                        lng,
+                        info: {
+                            free: total - used,
+                            total,
+                            prkCrg,
+                            addCrg,
+                            addUnit
+                        }
+                    };
                 }).filter(p =>
-                    extendedBounds.contain(new kakao.maps.LatLng(p.lat, p.lng))
+                    extendedBounds.contain(new kakao.maps.LatLng(p.lat, p.lng)) &&
+                    !p.name.includes('버스') // 버스 전용 주차장 제외
                 );
 
+
                 lastPlaces = list;
+                const visibleMarkers = [];
 
                 list.forEach((p, i) => {
                     const pos = new kakao.maps.LatLng(p.lat, p.lng);
+
+                    if (map.getBounds().contain(pos)) {
+                        visibleMarkers.push(pos);
+                    }
+
                     const m = new kakao.maps.Marker({ position: pos, map, zIndex: 10 });
                     markers.push(m);
                     kakao.maps.event.addListener(m, 'click', () => {
@@ -197,6 +220,12 @@
                     overlays.push(ov);
                 });
 
+                if (visibleMarkers.length === 0 && list.length > 0) {
+                    const first = list[0];
+                    map.setCenter(new kakao.maps.LatLng(first.lat, first.lng));
+                    map.setLevel(3);
+                }
+
                 window.ReactNativeWebView.postMessage(
                     JSON.stringify({
                         type: 'PARKING_DATA',
@@ -205,16 +234,19 @@
                                 free: p.info.free,
                                 total: p.info.total,
                                 lat: p.lat,
-                                lng: p.lng
+                                lng: p.lng,
+                                prkCrg: p.info.prkCrg,
+                                addCrg: p.info.addCrg,
+                                addUnit: p.info.addUnit
                             };
                             return acc;
                         }, {}),
+
                         places: list.map(p => p.name)
                     })
                 );
+
             };
-
-
 
             window.selectPlace = function (idx) {
                 const p = lastPlaces[idx];
@@ -255,7 +287,6 @@
                 });
                 overlays.push(ov);
                 map.setCenter(pos);
-                map.setLevel(3);
             };
 
             window.clearMarkers = function () {
