@@ -286,41 +286,58 @@ export default function IndexScreen() {
           )}
 
           {mode === 'parking' && (
-            <View style={styles.filterButton}>
-              <Menu
-                visible={menuVisible}
-                onDismiss={() => setMenuVisible(false)}
-                anchor={
-                  <Button
-                    mode="outlined"
-                    onPress={() => setMenuVisible(true)}
-                    textColor="#000"
-                    contentStyle={{ height: 36 }}
-                    labelStyle={{ fontSize: 13, lineHeight: 16 }}
-                    style={{
-                      borderColor: '#000',
-                      borderRadius: 20,
-                      alignSelf: 'flex-start',
-                    }}
-                  >
-                    {sortType} ▼
-                  </Button>
-                }
+            <View style={styles.topBarRow}>
+              {/* ◀︎ 뒤로가기 버튼 */}
+              <TouchableOpacity
+                onPress={() => {
+                  setMode('search');
+                  setPlaceList([]);
+                  setParkingInfoMap({});
+                  setSelectIndex(undefined);
+                  webviewRef.current?.postMessage(JSON.stringify({ type: 'CLEAR_MARKERS' }));
+                }}
+                style={styles.backButton}
               >
-                {['잔여 주차면수', '거리순', '기본 요금순', '추가 요금순'].map(option => (
-                  <Menu.Item
-                    key={option}
-                    onPress={() => {
-                      setSortType(option as typeof sortType);
-                      setMenuVisible(false);
-                    }}
-                    title={option}
-                  />
-                ))}
+                <Text style={styles.backButtonText}>{'<'}</Text>
+              </TouchableOpacity>
 
-              </Menu>
+              {/* 필터 드롭다운 버튼 */}
+              <View style={styles.filterWrapper}>
+                <Menu
+                  visible={menuVisible}
+                  onDismiss={() => setMenuVisible(false)}
+                  anchor={
+                    <Button
+                      mode="outlined"
+                      onPress={() => setMenuVisible(true)}
+                      textColor="#000"
+                      contentStyle={{ height: 36 }}
+                      labelStyle={{ fontSize: 13, lineHeight: 16 }}
+                      style={{
+                        borderColor: '#ddd',
+                        borderRadius: 20,
+                      }}
+                    >
+                      {sortType} ▼
+                    </Button>
+                  }
+                >
+                  {['잔여 주차면수', '거리순', '기본 요금순', '추가 요금순'].map(option => (
+                    <Menu.Item
+                      key={option}
+                      onPress={() => {
+                        setSortType(option as typeof sortType);
+                        setMenuVisible(false);
+                      }}
+                      title={option}
+                    />
+                  ))}
+                </Menu>
+              </View>
             </View>
           )}
+
+
 
           <FlatList<{ name: string; distance?: number; free?: string; total?: string; }>
             ref={flatListRef}
@@ -498,6 +515,29 @@ const styles = StyleSheet.create({
     height: '100%',
     resizeMode: 'cover',
   },
+
+  topBarRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 8,
+  },
+
+  backButton: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+
+  backButtonText: {
+    fontSize: 25,
+    color: '#000',
+  },
+
+  filterWrapper: {
+    // Button 스타일에 alignSelf 주면 안되므로 래퍼로 정렬
+  }
 
 });
 
