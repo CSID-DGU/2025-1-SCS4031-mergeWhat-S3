@@ -38,7 +38,7 @@ export default function IndexScreen() {
 
   const webviewRef = useRef<WebView>(null);
   const bottomSheetRef = useRef<BottomSheet>(null);
-  const flatListRef = useRef<FlatList<string>>(null);
+  const flatListRef = useRef<FlatList<{ name: string; distance?: number }>>(null);
   const snapPoints = useMemo(() => ['3%', '30%', '35%', '40%', '85%'], []);
 
   const categories = [
@@ -97,7 +97,7 @@ export default function IndexScreen() {
 
   const handleMarkerClick = (name: string) => {
     const currentList = mode === 'parking' ? sortedPlaceList : placeList;
-    const idx = currentList.findIndex(p => p === name);
+    const idx = currentList.findIndex(p => (typeof p === 'string' ? p : p.name) === name);
     if (idx === -1) return;
 
     flatListRef.current?.scrollToIndex({ index: idx, animated: true, viewPosition: 0 });
@@ -107,13 +107,14 @@ export default function IndexScreen() {
     setSelectIndex(idx);
   };
 
+
   const handleItemPress = (idx: number) => {
     // 리스트 인덱스 갱신
     setSelectIndex(idx);
 
     // 주차장 모드일 시 selectName으로 지도 이동
     if (mode === 'parking') {
-      const name = sortedPlaceList[idx];
+      const name = sortedPlaceList[idx].name;
       setSelectName(name);
     }
 
@@ -129,6 +130,9 @@ export default function IndexScreen() {
       setPlaceList(Object.keys(msg.data));
       setSelectIndex(undefined);
       bottomSheetRef.current?.snapToIndex(2);
+    }
+    if (msg.type === 'MARKER_CLICK') {
+      handleMarkerClick(msg.name);
     }
   };
 
@@ -150,25 +154,32 @@ export default function IndexScreen() {
 
   const sortedPlaceList = useMemo(() => {
     const list = [...placeList];
-    if (sortType === '잔여 주차면수') {
-      return list.sort((a, b) => {
-        const aFree = Number(parkingInfoMap[a]?.free ?? 0);
-        const bFree = Number(parkingInfoMap[b]?.free ?? 0);
-        return bFree - aFree;
-      });
-    } else if (sortType === '거리순' && userLocation) {
-      return list.sort((a, b) => {
-        const aInfo = parkingInfoMap[a];
-        const bInfo = parkingInfoMap[b];
-        if (!aInfo || !bInfo) return 0;
 
-        const aDist = getDistance(userLocation.lat, userLocation.lng, aInfo.lat, aInfo.lng);
-        const bDist = getDistance(userLocation.lat, userLocation.lng, bInfo.lat, bInfo.lng);
-        return aDist - bDist;
+    return list
+      .map(name => {
+        const info = parkingInfoMap[name];
+        const distance = (userLocation && info)
+          ? getDistance(userLocation.lat, userLocation.lng, info.lat, info.lng)
+          : null;
+        return {
+          name,
+          distance,
+          free: info?.free,
+          total: info?.total,
+        };
+      })
+      .sort((a, b) => {
+        if (sortType === '잔여 주차면수') {
+          const aFree = Number(parkingInfoMap[a.name]?.free ?? 0);
+          const bFree = Number(parkingInfoMap[b.name]?.free ?? 0);
+          return bFree - aFree;
+        } else if (sortType === '거리순') {
+          return (a.distance ?? Infinity) - (b.distance ?? Infinity);
+        }
+        return 0;
       });
-    }
-    return list;
   }, [placeList, sortType, parkingInfoMap, userLocation]);
+
 
   return (
     <PaperProvider>
@@ -212,7 +223,7 @@ export default function IndexScreen() {
         <BottomSheet
           ref={bottomSheetRef}
           snapPoints={snapPoints}
-          index={0}
+          index={1}
           enableContentPanningGesture={false}
           style={styles.sheetContainer}
         >
@@ -290,25 +301,50 @@ export default function IndexScreen() {
             </View>
           )}
 
-          <FlatList
+          <FlatList<{ name: string; distance?: number; free?: string; total?: string; }>
             ref={flatListRef}
-            data={mode === 'parking' ? sortedPlaceList : placeList}
-            keyExtractor={(item) => item}
+            data={
+              mode === 'parking'
+                ? sortedPlaceList
+                : placeList.map(name => ({ name }))
+            }
+            keyExtractor={(item) => item.name}
             renderItem={({ item }) => {
-              const currentList = mode === 'parking' ? sortedPlaceList : placeList;
-              const idx = currentList.findIndex(p => p === item);
+              const currentList =
+                mode === 'parking'
+                  ? sortedPlaceList
+                  : placeList.map(name => ({ name }));
+
+              const idx = currentList.findIndex(p => p.name === item.name);
               const isSelected = idx === selectIndex;
-              const info = parkingInfoMap[item];
+              const info = parkingInfoMap[item.name];
+              const distanceKm =
+                item.distance != null ? ` — ${(item.distance / 1000).toFixed(2)}km` : '';
+
               return (
                 <TouchableOpacity onPress={() => handleItemPress(idx)}>
-                  <View style={[styles.itemContainer, isSelected && styles.itemSelected]}>
-                    <Text style={styles.itemText}>
-                      {item}{info ? ` — ${info.free}/${info.total}` : ''}
-                    </Text>
+                  <View style={styles.cardContainer}>
+                    <View style={styles.cardTextContainer}>
+                      <Text style={styles.parkingTitle}>{item.name}</Text>
+                      <Text style={styles.parkingSubtitle}>공영주차장</Text>
+                      <Text style={styles.parkingDesc}>
+                        {item.free ? `잔여면수 ${item.free}면 / 총면수 ${item.total}면` : '정보 없음'}
+                      </Text>
+                      <View style={styles.parkingMeta}>
+                        <Text style={styles.distanceText}>
+                          {item.distance ? `${(item.distance / 1000).toFixed(1)}km` : '거리정보 없음'}
+                        </Text>
+
+                      </View>
+                    </View>
                   </View>
                 </TouchableOpacity>
+
               );
             }}
+
+
+
             ListEmptyComponent={() => (
               <View style={styles.emptyContainer}>
                 <Text style={styles.emptyText}>
@@ -356,6 +392,73 @@ const styles = StyleSheet.create({
   chip: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#ddd', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6, marginRight: 8, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 1 },
   chipText: { fontSize: 12, color: '#333' },
   itemSelected: { backgroundColor: '#e0f0ff', },
-  filterButton: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, marginTop: 8, marginBottom: 8, }
+  filterButton: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, marginTop: 8, marginBottom: 8, },
+  cardContainer: {
+    flexDirection: 'row',
+    padding: 12,
+    marginVertical: 6,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 1 },
+    marginHorizontal: 16,
+    alignItems: 'center',
+  },
+
+  cardTextContainer: {
+    flex: 1,
+    marginRight: 12,
+  },
+
+  parkingTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#2d5cff',
+  },
+
+  parkingSubtitle: {
+    fontSize: 12,
+    color: '#aaa',
+    marginVertical: 2,
+  },
+
+  parkingDesc: {
+    fontSize: 13,
+    color: '#333',
+    marginBottom: 4,
+  },
+
+  parkingMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  distanceText: {
+    fontSize: 12,
+    color: '#ff5b5b',
+    marginRight: 8,
+  },
+
+  reviewText: {
+    fontSize: 12,
+    color: '#bbb',
+  },
+
+  imageWrapper: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+
+  parkingImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+
 });
 

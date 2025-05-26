@@ -98,7 +98,7 @@
                             markers.push(m);
                             kakao.maps.event.addListener(m, 'click', () => {
                                 window.ReactNativeWebView.postMessage(
-                                    JSON.stringify({ type: 'MARKER_CLICK', name: p.name })
+                                    JSON.stringify({ type: 'MARKER_CLICK', name: p.place_name })
                                 );
                             });
                             const ov = new kakao.maps.CustomOverlay({
