@@ -334,6 +334,10 @@ function MapHomeScreen() {
     );
     //setActiveIndoor(name);
     setSelectedMarketName(name);
+    setClickedIndoorName(null); // 폴리곤 직접 클릭한 건 아님
+    setSelectedMarketName(name); // 시장명 저장
+    setActiveIndoor(true); // IndoorInfoSheet 열도록 설정
+    bottomSheetRef.current?.snapToIndex(1); // BottomSheet 열기
   };
 
   // 백엔드로부터 searchResult 결과 렌더링

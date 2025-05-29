@@ -5,10 +5,12 @@ import {
   ManyToOne,
   CreateDateColumn,
   JoinColumn,
+  OneToMany,
 } from 'typeorm';
 import { User } from 'src/auth/member.entity'; // 실제 User entity 경로에 맞게 수정
+import { PostImage } from 'src/post_image/post_image.entity';
 
-export type BoardType = 'produce' | 'free' | 'food' | 'fashion';
+export type BoardType = 'produce' | 'course' | 'food' | 'fashion' | 'etc';
 
 @Entity('post')
 export class Post {
@@ -33,7 +35,10 @@ export class Post {
 
   @Column({
     type: 'enum',
-    enum: ['produce', 'free', 'food', 'fashion'],
+    enum: ['produce', 'course', 'food', 'fashion', 'etc'],
   })
   board_type: BoardType;
+
+  @OneToMany(() => PostImage, (image) => image.post, { cascade: true })
+  images: PostImage[];
 }

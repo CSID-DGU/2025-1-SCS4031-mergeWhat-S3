@@ -79,3 +79,19 @@ export type EditStackParamList = {
     }[];
   };
 };
+
+export interface PostImage {
+  id: number;
+  postImageUrl: string; // postImage_url 컬럼이 postImageUrl로 매핑됨
+  post_id: number;
+}
+
+export interface Post {
+  id: number;
+  title: string;
+  content: string;
+  created_at: string;
+  user_id: number;
+  board_type: 'course' | 'produce' | 'food' | 'fashion';
+  images?: PostImage[];
+}

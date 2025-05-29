@@ -7,6 +7,7 @@ import { join } from 'path';
 import { MarketModule } from './market/market.module';
 import { StoreModule } from './store/store.module';
 import { StoreReviewModule } from './store_review/store_review.module';
+import { PostModule } from './post/post.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { StoreReviewModule } from './store_review/store_review.module';
     MarketModule,
     StoreModule,
     StoreReviewModule,
+    PostModule,
   ],
   providers: [ConfigService],
 })

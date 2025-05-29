@@ -12,6 +12,7 @@ export class PostService {
 
   async findAll(): Promise<Post[]> {
     return this.postRepository.find({
+      relations: ['images'],
       order: { created_at: 'DESC' },
     });
   }
@@ -19,6 +20,7 @@ export class PostService {
   async findByBoardType(type: string): Promise<Post[]> {
     return this.postRepository.find({
       where: { board_type: type as BoardType },
+      relations: ['images'],
       order: { created_at: 'DESC' },
     });
   }
@@ -30,5 +32,15 @@ export class PostService {
 
   async findOne(id: number): Promise<Post> {
     return this.postRepository.findOne({ where: { id } });
+  }
+
+  async getPostsByCategory(
+    type: 'course' | 'produce' | 'food' | 'fashion' | 'etc',
+  ): Promise<Post[]> {
+    return this.postRepository.find({
+      where: { board_type: type },
+      relations: ['images'],
+      order: { created_at: 'DESC' },
+    });
   }
 }

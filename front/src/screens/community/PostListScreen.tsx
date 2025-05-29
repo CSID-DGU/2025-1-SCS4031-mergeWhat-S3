@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -12,8 +12,10 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import {useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {CommunityStackParamList} from '../../types/common';
-// 필요한 경우에만 SearchBar import
+// 필요한 경우
 // import SearchBar from '../../components/SearchBar';
+import {fetchPostsByCategory} from '../../api/post';
+import {Post} from '../../types/common';
 
 type NavigationProp = StackNavigationProp<
   CommunityStackParamList,
@@ -22,13 +24,107 @@ type NavigationProp = StackNavigationProp<
 
 const PostListScreen = () => {
   const navigation = useNavigation<NavigationProp>();
-  const [selectedMarket, setSelectedMarket] = useState('자유게시판');
+  const [selectedMarket, setSelectedMarket] = useState('시장로드맵');
   const [showDropdown, setShowDropdown] = useState(false);
   const [showSearchBar, setShowSearchBar] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [searchText, setSearchText] = useState('');
 
-  const marketOptions = ['자유게시판', '농수산물', '먹거리', '옷', '기타 품목'];
+  const marketOptions = ['시장로드맵', '농수산물', '먹거리', '옷', '기타 품목'];
+
+  // api요청을 위해
+  const [selectedCategory, setSelectedCategory] = useState('시장로드맵');
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [liked, setLiked] = useState<{[key: number]: boolean}>({});
+  const [likeCounts, setLikeCounts] = useState<{[key: number]: number}>({});
+  const [postImages, setPostImages] = useState<{[key: number]: string | null}>(
+    {},
+  );
+
+  const categoryMap: {[key: string]: string} = {
+    시장로드맵: 'course',
+    농수산물: 'produce',
+    먹거리: 'food',
+    옷: 'fashion',
+    기타품목: 'etc',
+  };
+
+  const handleLikeToggle = (postId: number) => {
+    setLiked(prev => ({...prev, [postId]: !prev[postId]}));
+    setLikeCounts(prev => ({
+      ...prev,
+      [postId]: (prev[postId] ?? 0) + (liked[postId] ? -1 : 1),
+    }));
+  };
+
+  useEffect(() => {
+    const loadPosts = async () => {
+      try {
+        const category = categoryMap[selectedCategory] ?? 'free';
+        const response = await fetchPostsByCategory(category);
+        setPosts(response); // images 배열이 포함됩니다.
+        console.log('📦 받은 게시글 목록:', response); // 디버깅용: images 배열 확인
+      } catch (err) {
+        console.error('❌ 게시물 불러오기 실패:', err);
+      }
+    };
+    loadPosts();
+  }, [selectedCategory]);
+
+  const renderPost = ({item}: {item: Post}) => {
+    const postImageUrl = item.images?.[0]?.postImageUrl;
+
+    return (
+      <View style={styles.postCard}>
+        <View style={styles.rowContainer}>
+          <View style={{flex: 1}}>
+            <Text style={styles.title}>{item.title}</Text>
+            <Text style={styles.content} numberOfLines={2}>
+              {item.content}
+            </Text>
+
+            {/* 좋아요 및 댓글 UI */}
+            <View style={styles.reactionRow}>
+              <TouchableOpacity
+                onPress={() => handleLikeToggle(item.id)}
+                style={styles.iconRow}>
+                <Text style={{fontSize: 16}}>
+                  {liked[item.id] ? '❤️' : '🤍'}
+                </Text>
+                <Text style={{marginLeft: 4}}>{likeCounts[item.id] ?? 0}</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.iconRow}>
+                <Image
+                  source={require('../../assets/community_icon.png')}
+                  style={{width: 18, height: 18}}
+                />
+                <Text style={{marginLeft: 4}}>댓글</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* 이미지 */}
+          {postImageUrl ? (
+            <Image
+              source={{uri: postImageUrl}}
+              style={styles.postImage}
+              resizeMode="cover"
+            />
+          ) : // 이미지가 없을 때 기본 이미지를 보여주고 싶다면 이 부분을 활성화
+          // <Image
+          //   source={require('../../assets/시장기본이미지.png')}
+          //   style={styles.postImage}
+          //   resizeMode="cover"
+          // />
+          null // 이미지가 없을 때 아무것도 보여주지 않음
+          }
+        </View>
+      </View>
+    );
+  };
+
+  // - - - - - - - - - - - - - -  - - - - - - - - - - -
 
   return (
     <View style={styles.container}>
@@ -48,6 +144,7 @@ const PostListScreen = () => {
                   key={option}
                   onPress={() => {
                     setSelectedMarket(option);
+                    setSelectedCategory(option);
                     setShowDropdown(false);
                   }}
                   style={styles.dropdownItem}>
@@ -90,10 +187,12 @@ const PostListScreen = () => {
         )}
       </View>
 
-      {/* 게시물 목록 (현재는 더미 제거, 향후 API 연결 예정) */}
-      <View style={styles.noPosts}>
-        <Text style={{color: '#888'}}>등록된 게시물이 없습니다.</Text>
-      </View>
+      {/* 게시물 목록 */}
+      <FlatList
+        data={posts}
+        keyExtractor={item => item.id.toString()}
+        renderItem={renderPost}
+      />
 
       {/* 플로팅 + 버튼 */}
       <TouchableOpacity
@@ -113,6 +212,32 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: 'center',
   },
+  postCard: {
+    backgroundColor: '#f9f9f9',
+    padding: 14,
+    borderRadius: 12,
+    marginBottom: 16,
+    borderWidth: 0.5,
+    borderColor: '#eee',
+  },
+  postContentRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  rowContainer: {
+    flexDirection: 'row', // 이미지와 텍스트 나란히
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+  },
+  title: {
+    fontWeight: 'bold',
+    fontSize: 15,
+    marginBottom: 6,
+  },
+  content: {
+    fontSize: 14,
+    color: '#444',
+  },
   marketButton: {
     paddingVertical: 6,
     paddingHorizontal: 10,
@@ -130,6 +255,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
     paddingVertical: 6,
     elevation: 5,
+    width: 120,
   },
   dropdownItem: {
     paddingVertical: 8,
@@ -194,6 +320,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     paddingVertical: 4,
     color: '#333',
+  },
+  reactionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  iconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  postImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    marginLeft: 12,
+    backgroundColor: '#eee',
   },
 });
 

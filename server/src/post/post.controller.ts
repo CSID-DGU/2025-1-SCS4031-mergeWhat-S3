@@ -19,21 +19,29 @@ export class PostController {
     return this.postService.findAll();
   }
 
-  // 게시판 타입별 조회
-  @Get('by-type')
-  getByType(@Query('type') type: string): Promise<PostEntity[]> {
-    return this.postService.findByBoardType(type);
+  @Get('by-category')
+  async getPostsByCategory(
+    @Query('category')
+    category: 'course' | 'produce' | 'etc' | 'food' | 'fashion',
+  ): Promise<PostEntity[]> {
+    return this.postService.findByBoardType(category);
   }
 
-  // 단일 게시글 조회
-  @Get(':id')
-  getById(@Param('id') id: number): Promise<PostEntity> {
-    return this.postService.findOne(id);
-  }
-
-  // 게시글 등록
-  @HttpPost()
-  createPost(@Body() body: Partial<PostEntity>): Promise<PostEntity> {
-    return this.postService.create(body);
+  @HttpPost('write')
+  createPostByWrite(
+    @Body()
+    body: {
+      title: string;
+      content: string;
+      board_type: 'course' | 'produce' | 'food' | 'fashion' | 'etc';
+    },
+  ): Promise<PostEntity> {
+    const userId = 3; // 실제 로그인 유저 ID로 교체 필요 (예: req.user.id)
+    return this.postService.create({
+      user_id: userId,
+      title: body.title,
+      content: body.content,
+      board_type: body.board_type,
+    });
   }
 }
