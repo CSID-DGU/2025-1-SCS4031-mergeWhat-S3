@@ -1,66 +1,112 @@
 // app/(tabs)/mypage/_layout.tsx
 import { Stack } from 'expo-router';
+import { AuthProvider } from '@/hooks/useAuthContext';
 import React from 'react';
 
 export default function MypageLayout() {
     return (
-        <Stack
-            // index.tsx 를 초기 화면으로 삼겠다
-            initialRouteName="index"
-            screenOptions={{
-                headerTitleAlign: 'center',
-                headerShadowVisible: false,
-            }}
-        >
-            {/* /mypage → index.tsx */}
-            <Stack.Screen
-                name="index"
-                options={{
-                    headerShown: false,
+        <AuthProvider>
+            <Stack
+                // index.tsx 를 초기 화면으로 삼겠다
+                initialRouteName="index"
+                screenOptions={{
+                    headerTitleAlign: 'center',
+                    headerShadowVisible: false,
                 }}
-            />
+            >
+                {/* /mypage → index.tsx */}
+                <Stack.Screen
+                    name="index"
+                    options={{
+                        headerShown: false,
+                    }}
+                />
 
-            {/* /mypage/posts */}
-            <Stack.Screen
-                name="posts"
-                options={{
-                    title: '내가 쓴 게시글',
-                    headerBackVisible: true,
-                    headerTitleStyle: {
-                        fontSize: 20,
-                        fontWeight: 'bold',
-                        color: '#000',
-                    },
-                }}
-            />
+                {/* /mypage/posts */}
+                <Stack.Screen
+                    name="posts"
+                    options={{
+                        title: '내가 쓴 게시글',
+                        headerBackVisible: true,
+                        headerTitleStyle: {
+                            fontSize: 20,
+                            fontWeight: 'bold',
+                            color: '#000',
+                        },
+                    }}
+                />
 
-            {/* /mypage/reviews */}
-            <Stack.Screen
-                name="reviews"
-                options={{
-                    title: '내 리뷰',
-                    headerBackVisible: true,
-                    headerTitleStyle: {
-                        fontSize: 20,
-                        fontWeight: 'bold',
-                        color: '#000',
-                    },
-                }}
-            />
+                {/* /mypage/reviews */}
+                <Stack.Screen
+                    name="reviews"
+                    options={{
+                        title: '내 리뷰',
+                        headerBackVisible: true,
+                        headerTitleStyle: {
+                            fontSize: 20,
+                            fontWeight: 'bold',
+                            color: '#000',
+                        },
+                    }}
+                />
 
-            {/* /mypage/bookmarks */}
-            <Stack.Screen
-                name="bookmarks"
-                options={{
-                    title: '찜한 가게',
-                    headerBackVisible: true,
-                    headerTitleStyle: {
-                        fontSize: 20,
-                        fontWeight: 'bold',
-                        color: '#000',
-                    },
-                }}
-            />
-        </Stack>
+                {/* /mypage/bookmarks */}
+                <Stack.Screen
+                    name="bookmarks"
+                    options={{
+                        title: '찜한 가게',
+                        headerBackVisible: true,
+                        headerTitleStyle: {
+                            fontSize: 20,
+                            fontWeight: 'bold',
+                            color: '#000',
+                        },
+                    }}
+                />
+
+                {/* /mypage/comments */}
+                <Stack.Screen
+                    name="comments"
+                    options={{
+                        title: '댓글 단 글',
+                        headerBackVisible: true,
+                        headerTitleStyle: {
+                            fontSize: 20,
+                            fontWeight: 'bold',
+                            color: '#000',
+                        },
+                    }}
+                />
+
+                {/* /mypage/likes */}
+                <Stack.Screen
+                    name="likes"
+                    options={{
+                        title: '좋아요 누른 글',
+                        headerBackVisible: true,
+                        headerTitleStyle: {
+                            fontSize: 20,
+                            fontWeight: 'bold',
+                            color: '#000',
+                        },
+                    }}
+                />
+
+                {/* /mypage/withdraw (회원 탈퇴)*/}
+                <Stack.Screen
+                    name="withdraw"
+                    options={{
+                        title: '회원 탈퇴',
+                        headerBackVisible: true,
+                        headerTitleStyle: {
+                            fontSize: 20,
+                            fontWeight: 'bold',
+                            color: '#000',
+                        },
+                    }}
+                />
+
+            </Stack>
+        </AuthProvider>
     );
 }

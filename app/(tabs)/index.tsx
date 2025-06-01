@@ -17,6 +17,7 @@ import SearchBar from '@/components/SearchBar';
 import KakaoMap from '@/components/KakaoMap';
 import * as Location from 'expo-location';
 import { Menu, Button, Provider as PaperProvider } from 'react-native-paper';
+import { MaterialIcons } from '@expo/vector-icons';
 
 configureReanimatedLogger({ level: ReanimatedLogLevel.warn, strict: false });
 
@@ -46,7 +47,7 @@ export default function IndexScreen() {
   const webviewRef = useRef<WebView>(null);
   const bottomSheetRef = useRef<BottomSheet>(null);
   const flatListRef = useRef<FlatList<{ name: string; distance?: number }>>(null);
-  const snapPoints = useMemo(() => ['3%', '30%', '35%', '40%', '85%'], []);
+  const snapPoints = useMemo(() => ['3%', '30%', '35%', '40%', '60%', '85%'], []);
 
   const categories = [
     { icon: '🥬', label: '채소' },
@@ -298,7 +299,7 @@ export default function IndexScreen() {
                 }}
                 style={styles.backButton}
               >
-                <Text style={styles.backButtonText}>{'<'}</Text>
+                <MaterialIcons name="keyboard-arrow-left" size={25} color="#333" />
               </TouchableOpacity>
 
               {/* 필터 드롭다운 버튼 */}

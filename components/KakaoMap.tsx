@@ -68,7 +68,7 @@ const KakaoMap = forwardRef<WebView, KakaoMapProps>(({
       <WebView
         ref={webviewRef}
         originWhitelist={['*']}
-        source={{ uri: 'http://192.168.45.37:3000/map.html' }}
+        source={{ uri: 'http://192.168.45.7:3000/map.html' }}
         javaScriptEnabled
         domStorageEnabled
         injectedJavaScript={`

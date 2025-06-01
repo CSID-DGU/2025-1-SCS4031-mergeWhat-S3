@@ -1,5 +1,5 @@
 // app/(tabs)/mypage/index.tsx
-import React, { useEffect } from 'react';
+import React from 'react';
 import {
     ActivityIndicator,
     SafeAreaView,
@@ -8,16 +8,12 @@ import {
     Text,
     StyleSheet,
     TouchableOpacity,
+    Alert,
+    Image,
 } from 'react-native';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-// import useAuth from '../../../hooks/queries/useAuth'; // 추후 통합 시 주석 해제
-
-// const statsConfig = (user: { postCount: number; reviewCount: number; bookmarkedCount: number }) => [
-//   { label: '게시글', count: user.postCount, screen: '/mypage/posts' },
-//   { label: '리뷰', count: user.reviewCount, screen: '/mypage/reviews' },
-//   { label: '찜한 가게', count: user.bookmarkedCount, screen: '/mypage/bookmarks' },
-// ] as const;
+import { useAuthContext } from '../../../hooks/useAuthContext';
+import LoginScreen from '../../login';
 
 const stats = [
     { label: '게시글', count: 46, screen: '/mypage/posts' },
@@ -25,46 +21,49 @@ const stats = [
     { label: '찜한 가게', count: 33, screen: '/mypage/bookmarks' },
 ] as const;
 
-const communityItems = ['댓글 단 글', '좋아요 누른 글'] as const;
-const otherItems = ['문의하기', '차량 정보 등록하기', '로그아웃', '회원 탈퇴'] as const;
+const communityItems = [
+    { label: '댓글 단 글', screen: '/mypage/comments' },
+    { label: '좋아요 누른 글', screen: '/mypage/likes' },
+] as const;
+
+const otherItems = ['문의하기', '로그아웃', '회원 탈퇴'] as const;
 
 export default function MypageIndexScreen() {
     const router = useRouter();
+    const { isLoading, isLoggedIn, user, logout } = useAuthContext();
 
-    // 로그인 상태 판단 (추후 통합)
-    // const { isLoading: authLoading, isLoggedIn, user } = useAuth();
-    // useEffect(() => {
-    //   if (!authLoading && !isLoggedIn) {
-    //     router.replace('/login');
-    //   }
-    // }, [authLoading, isLoggedIn]);
-    // if (authLoading) {
-    //   return (
-    //     <View style={styles.loader}>
-    //       <ActivityIndicator size="large" />
-    //     </View>
-    //   );
-    // }
-    // if (!isLoggedIn || !user) return null;
+    if (isLoading) {
+        return (
+            <View style={styles.loader}>
+                <ActivityIndicator size="large" />
+            </View>
+        );
+    }
+
+    if (!isLoggedIn || !user) {
+        return <LoginScreen />;
+    }
 
     return (
         <SafeAreaView style={styles.container}>
             <ScrollView contentContainerStyle={styles.content}>
-                {/* Profile Header */}
+                {/* 프로필 헤더 */}
                 <View style={styles.profileRow}>
                     <View style={styles.avatarWrapper}>
-                        <Ionicons name="person-circle-outline" size={64} color="#ccc" />
-                        <TouchableOpacity style={styles.editIcon}>
-                            <Ionicons name="pencil" size={16} color="#555" />
-                        </TouchableOpacity>
+                        {user.profileImage ? (
+                            <Image source={{ uri: user.profileImage }} style={styles.avatarImage} />
+                        ) : (
+                            <View style={styles.avatarPlaceholder}>
+                                <Text style={styles.avatarText}>?</Text>
+                            </View>
+                        )}
                     </View>
-                    <TouchableOpacity style={styles.userInfoRow}>
-                        <Text style={styles.userName}>박서영님</Text>
-                        <MaterialIcons name="keyboard-arrow-right" size={20} color="#333" />
-                    </TouchableOpacity>
+                    <View style={styles.userInfoRow}>
+                        <Text style={styles.userName}>{user.nickname}님</Text>
+                    </View>
                 </View>
 
-                {/* Stats Card */}
+                {/* 통계 카드 */}
                 <View style={styles.card}>
                     {stats.map((item, idx) => (
                         <TouchableOpacity
@@ -79,26 +78,61 @@ export default function MypageIndexScreen() {
                     ))}
                 </View>
 
-                {/* Community Section */}
+                {/* 커뮤니티 섹션 */}
                 <Text style={styles.sectionTitle}>커뮤니티</Text>
                 <View style={styles.sectionList}>
-                    {communityItems.map(title => (
-                        <TouchableOpacity key={title} style={styles.listItem}>
-                            <Text style={styles.listItemText}>{title}</Text>
+                    {communityItems.map((item) => (
+                        <TouchableOpacity
+                            key={item.label}
+                            style={styles.listItem}
+                            onPress={() => router.push(item.screen)}
+                        >
+                            <Text style={styles.listItemText}>{item.label}</Text>
                         </TouchableOpacity>
                     ))}
                 </View>
 
-                {/* Other Section */}
+                {/* 기타 섹션 */}
                 <Text style={[styles.sectionTitle, { marginTop: 24 }]}>기타</Text>
                 <View style={styles.sectionList}>
-                    {otherItems.map(title => (
-                        <TouchableOpacity key={title} style={styles.listItem}>
+                    {otherItems.map((title) => (
+                        <TouchableOpacity
+                            key={title}
+                            style={styles.listItem}
+                            onPress={() => {
+                                if (title === '로그아웃') {
+                                    Alert.alert(
+                                        '로그아웃',
+                                        '정말 로그아웃 하시겠습니까?',
+                                        [
+                                            { text: '취소', style: 'cancel' },
+                                            {
+                                                text: '확인',
+                                                style: 'destructive',
+                                                onPress: async () => {
+                                                    await logout();
+                                                    router.replace('/mypage');
+                                                },
+                                            },
+                                        ],
+                                        { cancelable: true }
+                                    );
+                                } else if (title === '회원 탈퇴') {
+                                    router.push('/mypage/withdraw');
+                                } else {
+                                    Alert.alert(title, `${title} 화면은 아직 구현되지 않았습니다.`);
+                                }
+                            }}
+                        >
                             <Text style={styles.listItemText}>{title}</Text>
                         </TouchableOpacity>
                     ))}
                 </View>
+                <View style={styles.logoTitle}>
+                    <Text style={{ fontSize: 20, fontWeight: 'bold', paddingTop: 30, }}>시장하시죠</Text>
+                </View>
             </ScrollView>
+
         </SafeAreaView>
     );
 }
@@ -114,26 +148,26 @@ const styles = StyleSheet.create({
     },
     profileRow: { flexDirection: 'row', alignItems: 'center' },
     avatarWrapper: {
-        position: 'relative',
         width: 64,
         height: 64,
         borderRadius: 32,
+        overflow: 'hidden',
         backgroundColor: '#eee',
         alignItems: 'center',
         justifyContent: 'center',
     },
-    editIcon: {
-        position: 'absolute',
-        bottom: 0,
-        right: 0,
-        backgroundColor: '#fff',
-        borderRadius: 12,
-        padding: 2,
-        borderWidth: 1,
-        borderColor: '#ddd',
+    avatarImage: { width: 64, height: 64, borderRadius: 32 },
+    avatarPlaceholder: {
+        width: 64,
+        height: 64,
+        borderRadius: 32,
+        backgroundColor: '#ccc',
+        alignItems: 'center',
+        justifyContent: 'center',
     },
-    userInfoRow: { flexDirection: 'row', alignItems: 'center', marginLeft: 12 },
-    userName: { fontSize: 18, fontWeight: 'bold', color: '#333' },
+    avatarText: { fontSize: 24, color: '#fff' },
+    userInfoRow: { marginLeft: 12 },
+    userName: { fontSize: 18, fontWeight: 'bold', color: '#333', paddingLeft: 3, paddingBottom: 3, },
 
     card: {
         flexDirection: 'row',
@@ -152,10 +186,24 @@ const styles = StyleSheet.create({
     statItem: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     statCount: { fontSize: 16, fontWeight: 'bold', color: '#4A90E2' },
     statLabel: { fontSize: 12, color: '#888', marginTop: 4 },
-    dividerVertical: { position: 'absolute', right: 0, top: 8, bottom: 8, width: 1, backgroundColor: '#eee' },
+    dividerVertical: {
+        position: 'absolute',
+        right: 0,
+        top: 8,
+        bottom: 8,
+        width: 1,
+        backgroundColor: '#eee',
+    },
 
     sectionTitle: { fontSize: 16, fontWeight: '600', color: '#333', marginTop: 32, marginBottom: 8 },
     sectionList: { borderWidth: 1, borderColor: '#eee', borderRadius: 8, overflow: 'hidden' },
-    listItem: { paddingVertical: 16, paddingHorizontal: 12, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#eee' },
+    listItem: {
+        paddingVertical: 16,
+        paddingHorizontal: 12,
+        backgroundColor: '#fff',
+        borderBottomWidth: 1,
+        borderBottomColor: '#eee',
+    },
     listItemText: { fontSize: 14, color: '#333' },
+    logoTitle: { flex: 1, justifyContent: 'center', alignItems: 'center' }
 });
