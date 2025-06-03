@@ -46,6 +46,8 @@ function AuthStackNavigator() {
           headerTitle: '카카오 로그인',
         }}
       />
+      <Stack.Screen name="Auth" component={AuthStackNavigator} />
+  <Stack.Screen name="Mypage" component={MyPageNavigator} />
     </Stack.Navigator>
   );
 }

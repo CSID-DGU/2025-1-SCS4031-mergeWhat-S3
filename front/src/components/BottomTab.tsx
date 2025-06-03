@@ -10,6 +10,7 @@ import MypageScreen from '../screens/mypage/MypageScreen';
 //import AuthHomeScreen from '../screens/auth/AuthHomeScreen'; //로그인 및 회원가입
 import AuthStackNavigator from '../navigations/stack/AuthStackNavigator';
 import CommunityStackNavigator from '../navigations/stack/CommunityNavigator';
+import MyPageNavigator from '../navigations/stack/MyPageNavigator';
 
 // 아이콘
 import mapIcon from '../assets/map_icon.png';
@@ -21,6 +22,7 @@ import clickedCommIcon from '../assets/click_community_icon.png';
 import mypageIcon from '../assets/mypage_icon.png';
 import clickedMypageIcon from '../assets/click_mypage_icon.png';
 import PostListScreen from '../screens/community/PostListScreen';
+
 
 const Tab = createBottomTabNavigator();
 
@@ -63,7 +65,7 @@ function BottomTab() {
       />
       <Tab.Screen
         name="Mypage"
-        component={AuthStackNavigator}
+        component={MyPageNavigator}
         options={{
           tabBarLabel: '마이페이지',
           tabBarIcon: ({focused}) => (
@@ -89,7 +91,6 @@ const styles = StyleSheet.create({
   icon: {
     width: 24,
     height: 24,
-    tintColor: 'underfined',
   },
   focusedIcon: {
     tintColor: '#2a85ff',

@@ -1,3 +1,13 @@
 {
-  "extends": "@react-native/typescript-config/tsconfig.json"
+  "extends": "@react-native/typescript-config/tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2015",
+    "lib": [
+      "ES2015"
+    ],
+    // 선언만 되고 사용되지 않은 지역 변수는 에러로 처리하지 않음
+    "noUnusedLocals": false,
+    // 선언만 되고 사용되지 않은 함수 매개변수는 에러로 처리하지 않음
+    "noUnusedParameters": false
+  }
 }
