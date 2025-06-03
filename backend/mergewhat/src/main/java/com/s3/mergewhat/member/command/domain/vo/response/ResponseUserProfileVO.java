@@ -13,8 +13,6 @@ public class ResponseUserProfileVO {
     private Long id;
     private String email;
     private String nickname;
-
-    @JsonProperty("profile_url")
     private String profileUrl;
 
 }

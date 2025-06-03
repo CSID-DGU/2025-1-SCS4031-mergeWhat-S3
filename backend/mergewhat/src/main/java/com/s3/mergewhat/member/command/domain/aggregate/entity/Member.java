@@ -1,9 +1,12 @@
 package com.s3.mergewhat.member.command.domain.aggregate.entity;
 
+import com.s3.mergewhat.post.domain.aggregate.Post;
+import com.s3.mergewhat.storereview.domain.aggregate.entity.StoreReview;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Entity
@@ -52,6 +55,12 @@ public class Member {
 
     @Column(name = "is_social", nullable = false)
     private boolean isSocial;
+
+    @OneToMany(mappedBy = "member")
+    private List<Post> posts;
+
+    @OneToMany(mappedBy = "member")
+    private List<StoreReview> reviews;
 
 
     public void updateSocialInfo(String nickname, String profileUrl, String socialType, String socialId) {
