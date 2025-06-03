@@ -7,6 +7,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Entity
 @Table(name = "store")
 @Getter
@@ -24,7 +26,7 @@ public class Store {
     private Market market;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @Column(name = "category_id")
+    @JoinColumn(name = "category_id")
     private Category category;
 
     @Column(nullable = false)
@@ -42,6 +44,8 @@ public class Store {
     @Column(name = "indoor_name", nullable = false)
     private String indoorName;
 
+//    @OneToMany(mappedBy = "store", cascade = CascadeType.ALL)
+//    private List<StoreImage> storeImages;
 
     public void update(Market market, Category category, String name, String address,
                        String contact, Boolean isAffiliate, String indoorName ) {

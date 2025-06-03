@@ -13,7 +13,7 @@ public class CommandPostController {
 
     private final CommandPostService commandPostService;
 
-    @PostMapping
+    @PostMapping("/write")
     public ResponseDTO<?> create(@RequestBody RequestPostVO request) {
         return ResponseDTO.ok(commandPostService.create(request));
     }

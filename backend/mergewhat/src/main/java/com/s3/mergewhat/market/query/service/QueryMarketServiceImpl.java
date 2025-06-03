@@ -2,10 +2,8 @@ package com.s3.mergewhat.market.query.service;
 
 import com.s3.mergewhat.common.exception.CommonException;
 import com.s3.mergewhat.common.exception.ErrorCode;
-import com.s3.mergewhat.market.command.application.dto.MarketDTO;
-import com.s3.mergewhat.market.command.domain.repository.MarketRepository;
 import com.s3.mergewhat.market.command.domain.vo.ResponseMarketVO;
-import com.s3.mergewhat.market.query.repository.MarketMapper;
+import com.s3.mergewhat.market.query.mapper.MarketMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

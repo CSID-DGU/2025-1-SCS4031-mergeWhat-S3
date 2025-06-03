@@ -5,11 +5,7 @@ import com.s3.mergewhat.common.exception.ErrorCode;
 import com.s3.mergewhat.market.command.domain.aggregate.entity.Market;
 import com.s3.mergewhat.market.command.domain.repository.CategoryRepository;
 import com.s3.mergewhat.market.command.domain.repository.MarketRepository;
-import com.s3.mergewhat.store.command.application.dto.StoreDetailDTO;
 import com.s3.mergewhat.store.command.domain.aggregate.entity.*;
-import com.s3.mergewhat.store.command.domain.repository.BusinessHourRepository;
-import com.s3.mergewhat.store.command.domain.repository.StoreImageRepository;
-import com.s3.mergewhat.store.command.domain.repository.StoreProductRepository;
 import com.s3.mergewhat.store.command.domain.repository.StoreRepository;
 import com.s3.mergewhat.store.command.domain.vo.RequestStoreVO;
 import com.s3.mergewhat.store.command.domain.vo.ResponseStoreVO;
@@ -18,7 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 
 @Service
 @Slf4j

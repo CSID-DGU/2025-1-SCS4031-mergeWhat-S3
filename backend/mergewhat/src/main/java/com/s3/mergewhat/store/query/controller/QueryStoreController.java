@@ -2,9 +2,7 @@ package com.s3.mergewhat.store.query.controller;
 
 import com.s3.mergewhat.common.ResponseDTO;
 import com.s3.mergewhat.store.query.mapper.QueryStoreMapper;
-import com.s3.mergewhat.store.query.service.QueryStoreService;
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.Response;
 import org.springframework.web.bind.annotation.*;
 
 @RestController

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.s3.mergewhat.post.query.mapper.QueryPostMapper">
+    <resultMap id="PostWithImagesMap" type="com.s3.mergewhat.post.command.domain.vo.ResponsePostAndImageVO">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="title" column="title"/>
+        <result property="content" column="content"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="boardType" column="board_type"/>
+        <collection property="imageUrls" ofType="string" column="image_url"/>
+    </resultMap>
+
+    <select id="findPostById" resultMap="PostWithImagesMap">
+        SELECT
+            p.id,
+            p.user_id,
+            p.title,
+            p.content,
+            p.created_at,
+            p.board_type,
+            pi.postImage_url AS image_url
+        FROM post p
+                 LEFT JOIN post_image pi ON p.id = pi.post_id
+        WHERE p.id = #{postId}
+    </select>
+
+    <select id="findPostsByBoardType" resultMap="PostWithImagesMap">
+        SELECT
+            p.id,
+            p.user_id,
+            p.title,
+            p.content,
+            p.created_at,
+            p.board_type,
+            pi.postImage_url AS image_url
+        FROM post p
+                 LEFT JOIN post_image pi ON p.id = pi.post_id
+        WHERE p.board_type = #{boardType}
+        ORDER BY p.created_at DESC
+    </select>
+
+
+
+
+
+
+
+
+
+</mapper>

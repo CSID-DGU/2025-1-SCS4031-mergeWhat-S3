@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.s3.mergewhat.storereview.query.mapper.QueryStoreReviewMapper">
+    
+    <resultMap id="StoreReviewWithImagesResultMap" type="com.s3.mergewhat.storereview.command.domain.vo.ResponseStoreReviewVO">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="storeId" column="store_id"/>
+        <result property="rating" column="rating"/>
+        <result property="comment" column="comment"/>
+        <result property="createdAt" column="created_at"/>
+        <collection property="imageUrls" ofType="string">
+            <result column="image_url"/>
+        </collection>
+    </resultMap>
+    
+    <select id="findReviewByStoreId" resultMap="StoreReviewWithImagesResultMap">
+        SELECT
+            sr.id,
+            sr.user_id,
+            sr.store_id,
+            sr.rating,
+            sr.comment,
+            sr.created_at,
+            ri.image_url
+        FROM store_review sr
+                 LEFT JOIN review_image ri ON sr.id = ri.review_id
+        WHERE sr.store_id = #{storeId}
+        ORDER BY sr.created_at DESC
+    </select>
+
+</mapper>
