@@ -1,10 +1,14 @@
 package com.s3.mergewhat.store.controller;
 
 import com.s3.mergewhat.common.ResponseDTO;
+import com.s3.mergewhat.store.dto.KeywordResponseDTO;
+import com.s3.mergewhat.store.service.KeywordService;
 import com.s3.mergewhat.store.service.StoreService;
 import com.s3.mergewhat.store.vo.RequestStoreVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -12,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 public class StoreController {
 
     private final StoreService storeService;
-
+    private final KeywordService keywordService;
 
     @GetMapping("/all")
     public ResponseDTO<?> getAll() {
@@ -39,6 +43,12 @@ public class StoreController {
     @GetMapping("/{storeId}/products")
     public ResponseDTO<?> getStoreProducts(@PathVariable Long storeId) {
         return ResponseDTO.ok(storeService.getProducts(storeId));
+    }
+
+    // 키워드 조회
+    @GetMapping("/{storeId}/keywords")
+    public List<KeywordResponseDTO> getKeywordsByStoreId(@PathVariable Long storeId) {
+        return keywordService.getKeywordsByStoreId(storeId);
     }
 
     @PostMapping
