@@ -2,6 +2,7 @@ import { Controller, Get, Param, Query } from '@nestjs/common';
 import { StoreService } from './store.service';
 import { BusinessHourService } from '../business_hour/bh.service';
 import { StoreProductService } from 'src/store_product/store_product.service';
+import { StoreKeywordService } from 'src/store_keyword/store_keyword.service';
 
 @Controller('stores')
 export class StoreController {

@@ -22,7 +22,7 @@ import useAuth from '../../hooks/queries/useAuth';
 import {authNavigations} from '../../constants/navigations';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {AuthStackParamList} from '../../navigations/stack/AuthStackNavigator';
-import {submitReview} from '../../api/post';
+import {submitReview} from '../../api/review';
 
 const emptyStars = require('../../assets/review_star.png');
 

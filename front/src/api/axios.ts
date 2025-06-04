@@ -1,6 +1,11 @@
 import axios from 'axios';
 import {Platform} from 'react-native';
 
+/*const axiosInstance = axios.create({
+  baseURL: '',
+  withCredentials: true,
+});*/
+
 const axiosInstance = axios.create({
   baseURL:
     Platform.OS === 'android'

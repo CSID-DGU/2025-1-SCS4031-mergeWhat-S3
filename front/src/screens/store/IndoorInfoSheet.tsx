@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useRef, useState, useCallback} from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Image,
   Alert,
+  Dimensions,
 } from 'react-native';
 import {WebView} from 'react-native-webview';
 import {
@@ -19,20 +20,23 @@ import Geolocation from '@react-native-community/geolocation';
 import {BottomSheetScrollView} from '@gorhom/bottom-sheet';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {fetchBusinessHourByStoreId, BusinessHour} from '../../api/market';
-import ParkingInfo from '../../components/IndoorInfo/Parking';
+import ParkingInfo from '../../components/IndoorInfo/Parking'; // ParkingInfo 컴포넌트 임포트
 import AroundInfo from '../../components/IndoorInfo/Around';
 import {getUltraSrtFcst, WeatherData} from '../../components/weather';
 import {
   getWeatherIcon,
   getWeatherRecommendation,
 } from '../../components/IndoorInfo/getWeatherIcon';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, CommonActions} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
-import {ReviewStackParamList} from '../../types/common';
+import {ReviewStackParamList, StoreReview} from '../../types/common';
 import useAuth from '../../hooks/queries/useAuth';
 import {authNavigations} from '../../constants/navigations';
-import {CommonActions} from '@react-navigation/native';
 import ReviewList from '../../components/IndoorInfo/ReviewList';
+//import {StoreReview} from '../../api/review';
+import ReviewKeywords from '../../components/IndoorInfo/ReviewKeyword';
+
+const {width} = Dimensions.get('window');
 
 const defaultImage = require('../../assets/시장기본이미지.png');
 const productCategories = ['농수산물', '먹거리', '옷', '혼수', '가맹점'];
@@ -49,11 +53,11 @@ type Store = {
   address?: string;
   contact?: string;
   indoor_name: string;
+  market?: {name: string};
 };
 
 const emptyStars = require('../../assets/review_star.png');
 
-// 현재위치와 가게별 거리 계산
 const getDistanceFromLatLonInKm = (
   lat1: number,
   lon1: number,
@@ -73,15 +77,36 @@ const getDistanceFromLatLonInKm = (
   return (R * c).toFixed(1);
 };
 
-// - - - - - - - - - - - - - - - - - -
+type IndoorInfoSheetProps = {
+  polygonName: string | null;
+  marketName: string | null;
+  onSelectStore: (store: Store) => void;
+  onSelectCategory: (
+    category: string | null,
+    currentMarketName: string,
+  ) => void;
+  onBackToMarketList: () => void;
+  onStoresLoaded?: (stores: Store[]) => void;
+  centerLat: number;
+  centerLng: number;
+  webviewMode: 'market' | 'parking';
+  setWebviewMode: React.Dispatch<React.SetStateAction<'market' | 'parking'>>;
+  marketId: number; // ⭐ marketId prop 추가
+};
 
 const IndoorInfoSheet = ({
   polygonName,
   marketName,
-}: {
-  polygonName: string | null;
-  marketName: string;
-}) => {
+  onSelectStore,
+  onSelectCategory,
+  onBackToMarketList,
+  onStoresLoaded,
+  centerLat,
+  centerLng,
+  webviewMode,
+  setWebviewMode,
+  marketId, // ⭐ marketId prop 받기
+}: IndoorInfoSheetProps) => {
   type NavigationProp = StackNavigationProp<
     ReviewStackParamList,
     'IndoorInfoScreen'
@@ -94,6 +119,8 @@ const IndoorInfoSheet = ({
     longitude: number;
   } | null>(null);
 
+  const [setMarketId] = useState<number | null>(null);
+
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
   const [selectedTab, setSelectedTab] = useState<'home' | 'review' | 'product'>(
     'home',
@@ -103,9 +130,6 @@ const IndoorInfoSheet = ({
 
   const [averageRating, setAverageRating] = useState<number | null>(null);
 
-  // 로그인 판별
-
-  // 테스트용!!!
   const {isLogin: realLogin} = useAuth();
   const isLogin = true;
 
@@ -158,24 +182,43 @@ const IndoorInfoSheet = ({
 
   useEffect(() => {
     const loadStores = async () => {
+      // marketName이 null이면 스킵
+      if (!marketName) {
+        console.log('[ℹ️ store 로딩 스킵] marketName이 없습니다.');
+        setStoreList([]);
+        if (onStoresLoaded) {
+          onStoresLoaded([]);
+        }
+        return;
+      }
+
       try {
-        const stores = await fetchAllStores();
+        const stores = await fetchAllStores(marketName);
 
         if (polygonName) {
           const filtered = stores.filter(
             (store: Store) => store.indoor_name === polygonName,
           );
           setStoreList(filtered);
+          if (onStoresLoaded) {
+            onStoresLoaded(filtered);
+          }
         } else {
           setStoreList(stores);
+          if (onStoresLoaded) {
+            onStoresLoaded(stores);
+          }
         }
       } catch (error) {
         console.error('❌ store 불러오기 실패:', error);
+        if (onStoresLoaded) {
+          onStoresLoaded([]);
+        }
       }
     };
 
     loadStores();
-  }, [polygonName]); // <- polygonName이 바뀔 때마다 재요청
+  }, [polygonName, marketName, onStoresLoaded]); // marketName 의존성 추가
 
   useEffect(() => {
     const loadBusinessHour = async () => {
@@ -197,8 +240,27 @@ const IndoorInfoSheet = ({
 
   useEffect(() => {
     const loadMarketCenter = async () => {
+      // ⭐ 수정: marketName이 유효한지 먼저 확인
+      if (!marketName) {
+        console.log('[ℹ️ 시장 좌표 로딩 스킵] marketName이 없습니다.');
+        setSelectedMarketCenter(null);
+        return;
+      }
+
       try {
-        const data = await fetchMarketsByKeyword(marketName); // 🔎 keyword = 시장명
+        console.log('[🔍 fetchMarketsByKeyword 호출] marketName:', marketName); // 추가 로그
+        const data = await fetchMarketsByKeyword(marketName);
+
+        // ⭐ 수정: data가 배열이 아니거나 비어있을 경우 처리
+        if (!data || !Array.isArray(data) || data.length === 0) {
+          console.warn(
+            '[❌ 해당 시장 좌표 없음] fetchMarketsByKeyword 결과가 없거나 유효하지 않습니다. marketName:',
+            marketName,
+          );
+          setSelectedMarketCenter(null);
+          return;
+        }
+
         const matched = data.find((m: any) => m.name === marketName);
 
         if (matched && matched.center_lat && matched.center_lng) {
@@ -208,15 +270,27 @@ const IndoorInfoSheet = ({
           });
           console.log('[✅ 시장 좌표 설정 완료]', matched);
         } else {
-          console.warn('[❌ 해당 시장 좌표 없음]');
+          // ⭐ 수정: marketName은 이미 props로 받았으므로 바로 사용
+          console.log(
+            '[❌ 해당 시장 좌표 없음] 일치하는 시장을 찾지 못했거나 좌표가 없음. 현재 marketName:',
+            marketName,
+          );
+          setSelectedMarketCenter(null); // 매치되는 시장이 없으면 좌표 초기화
         }
       } catch (err) {
-        console.error('❌ market 좌표 불러오기 실패:', err);
+        // ⭐ 수정: 에러 발생 시 marketName 함께 로깅
+        console.error(
+          '❌ market 좌표 불러오기 실패:',
+          err,
+          'marketName:',
+          marketName,
+        );
+        setSelectedMarketCenter(null); // 에러 발생 시 좌표 초기화
       }
     };
 
     loadMarketCenter();
-  }, [marketName]);
+  }, [marketName]); // marketName이 변경될 때마다 이 useEffect가 실행됩니다.
 
   const getTodayBusinessHour = (): {status: string; time: string} => {
     const today = new Date();
@@ -272,44 +346,79 @@ const IndoorInfoSheet = ({
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  const handleCategoryPress = async (category: string) => {
-    console.log(`[👆 선택된 카테고리]: ${category}`);
-    if (category === selectedCategory) {
+  const handleCategoryPress = async (category: string | null) => {
+    if (category === '주차장') {
+      setWebviewMode('parking');
+
+      // ✅ 메시지 직접 전송: parking 모드로 전환
+      webViewRef.current?.postMessage(
+        JSON.stringify({
+          type: 'SET_MAP_MODE',
+          mode: 'parking',
+        }),
+      );
+
+      console.log('[IndoorInfoSheet] SET_MAP_MODE: parking 메시지 전송 완료');
+
+      setSelectedCategory('주차장');
+      setStoreList([]);
+      if (onStoresLoaded) onStoresLoaded([]);
+      return;
+    }
+
+    // marketName이 null이면 카테고리 필터링도 불가능하므로 경고 후 종료
+    if (!marketName) {
+      console.warn('[⚠️ 카테고리 필터링 불가] marketName이 없습니다.');
+      setStoreList([]);
+      if (onStoresLoaded) onStoresLoaded([]);
+      onSelectCategory(null, ''); // marketName이 없으므로 빈 문자열 전달 (또는 null)
+      return;
+    }
+
+    if (category === selectedCategory || category === null) {
       try {
-        const stores = await fetchAllStores();
+        const stores = await fetchAllStores(marketName);
         setStoreList(stores);
         setSelectedCategory(null);
+        if (onStoresLoaded) {
+          onStoresLoaded(stores);
+        }
+        onSelectCategory(null, marketName);
       } catch (err) {
         console.error('❌ 전체 store 재불러오기 실패:', err);
+        if (onStoresLoaded) {
+          onStoresLoaded([]);
+        }
+        onSelectCategory(null, marketName);
       }
     } else {
       try {
-        let stores;
+        let stores: Store[];
         if (category === '가맹점') {
-          const allStores = await fetchAllStores();
+          const allStores = await fetchAllStores(marketName);
           stores = allStores.filter(
-            (store: {is_affiliate: boolean}) => store.is_affiliate === true,
+            (store: {is_affiliate: boolean; market?: {name: string}}) =>
+              store.is_affiliate === true && store.market?.name === marketName,
           );
+        } else if (!productCategories.includes(category)) {
+          // '주차장', '화장실', '근처놀거리'와 같은 비-상점 카테고리는 storeList를 비웁니다.
+          stores = [];
         } else {
           stores = await fetchStoresByCategory(category, marketName);
         }
 
-        webViewRef.current?.postMessage(
-          JSON.stringify({
-            type: 'showMarkers',
-            markers: stores.map(
-              (store: {center_lat: any; center_lng: any}) => ({
-                lat: store.center_lat,
-                lng: store.center_lng,
-              }),
-            ),
-          }),
-        );
-
         setStoreList(stores);
         setSelectedCategory(category);
+        if (onStoresLoaded) {
+          onStoresLoaded(stores);
+        }
+        onSelectCategory(category, marketName);
       } catch (error) {
         console.error(`❌ ${category} 필터링 실패:`, error);
+        if (onStoresLoaded) {
+          onStoresLoaded([]);
+        }
+        onSelectCategory(null, marketName);
       }
     }
   };
@@ -337,6 +446,8 @@ const IndoorInfoSheet = ({
         },
         {enableHighAccuracy: true, timeout: 10000, maximumAge: 10000},
       );
+    } else {
+      setWeatherData(null);
     }
   }, [selectedCategory]);
 
@@ -371,7 +482,18 @@ const IndoorInfoSheet = ({
     </View>
   );
 
-  // 가게별 상세 정보 버튼시트
+  const [selectedReviewSort, setSelectedReviewSort] = useState<
+    'latest' | 'highestRating' | 'lowestRating'
+  >('latest'); // 리뷰 정렬 상태 추가
+
+  const [reviews, setReviews] = useState<StoreReview[]>([]);
+
+  const handleReviewsLoaded = useCallback((loadedReviews: StoreReview[]) => {
+    setReviews(loadedReviews); // IndoorInfoSheet의 reviews 상태 업데이트
+  }, []);
+
+  const [parkingPlaces, setParkingPlaces] = useState<any[]>([]);
+
   return (
     <BottomSheetScrollView contentContainerStyle={{padding: 16}}>
       <View style={{padding: 16}}>
@@ -388,6 +510,7 @@ const IndoorInfoSheet = ({
                 selectedStore.image ? {uri: selectedStore.image} : defaultImage
               }
               style={styles.storeImage}
+              resizeMode="cover"
             />
             <View style={styles.tabRow}>
               <TouchableOpacity
@@ -418,7 +541,7 @@ const IndoorInfoSheet = ({
               </TouchableOpacity>
             </View>
 
-            {selectedTab === 'home' && ( // 상세정보 중 '홈탭'
+            {selectedTab === 'home' && (
               <View style={styles.storeInfoBox}>
                 <Text style={styles.storeAddress}>{selectedStore.address}</Text>
 
@@ -513,55 +636,124 @@ const IndoorInfoSheet = ({
 
                 {renderProductList()}
                 <View style={{marginLeft: -10}}>
-                  {/* 평균 점수 + 별 아이콘 */}
-                  <ReviewList storeId={selectedStore.id} showAverage={true} />
+                  <ReviewList
+                    storeId={selectedStore.id}
+                    showAverage={true}
+                    sortBy={selectedReviewSort}
+                  />
                 </View>
               </View>
             )}
 
-            {selectedTab === 'product' && ( // 상세정보 중 '판매 품목 탭'
+            {selectedTab === 'product' && (
               <View style={styles.storeInfoBox}>{renderProductList()}</View>
             )}
 
-            {/*  리뷰작성란  */}
+            {/* 리뷰 키워드 분석 컴포넌트 */}
 
             {selectedTab === 'review' && (
-              <View style={{marginTop: 24}}>
-                {/* 안내 문구 */}
-                <Text
-                  style={{
-                    fontSize: 14,
-                    color: '#333',
-                    marginBottom: 1,
-                    textAlign: 'center',
-                  }}>
-                  <Text style={{color: '#3366FF', fontWeight: 'bold'}}>
-                    {selectedStore.name}
-                  </Text>{' '}
-                  다녀오셨어요?{'\n\n'}방문 후기를 남겨주세요!
-                </Text>
+              <View style={{marginTop: 24, paddingHorizontal: 0}}>
+                {reviews.length > 0 && ( // 리뷰가 있을 때만 키워드 분석 표시
+                  <ReviewKeywords
+                    storeId={selectedStore.id}
+                    totalReviewsCount={reviews.length} // ⭐ 전체 리뷰 개수 전달
+                  />
+                )}
+                {/* 리뷰가 없을 때 키워드 영역 표시 안 함 (ReviewKeywords 내부에서 처리 가능) */}
 
-                {/* 별 버튼 */}
-                <TouchableOpacity
-                  onPress={handleReviewPress}
-                  style={{
-                    alignItems: 'center',
-                    marginTop: 13,
-                  }}>
+                {/* ⭐ 리뷰 정렬 버튼들은 ReviewKeywords 아래, ReviewList 위에 위치 ⭐ */}
+                <View style={styles.reviewSortButtons}>
+                  <TouchableOpacity
+                    style={
+                      selectedReviewSort === 'latest'
+                        ? styles.sortButtonSelected
+                        : styles.sortButton
+                    }
+                    onPress={() => setSelectedReviewSort('latest')}>
+                    <Text
+                      style={
+                        selectedReviewSort === 'latest'
+                          ? styles.sortButtonTextSelected
+                          : styles.sortButtonText
+                      }>
+                      ● 최신순
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={
+                      selectedReviewSort === 'highestRating'
+                        ? styles.sortButtonSelected
+                        : styles.sortButton
+                    }
+                    onPress={() => setSelectedReviewSort('highestRating')}>
+                    <Text
+                      style={
+                        selectedReviewSort === 'highestRating'
+                          ? styles.sortButtonTextSelected
+                          : styles.sortButtonText
+                      }>
+                      ● 평점 높은 순
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={
+                      selectedReviewSort === 'lowestRating'
+                        ? styles.sortButtonSelected
+                        : styles.sortButton
+                    }
+                    onPress={() => setSelectedReviewSort('lowestRating')}>
+                    <Text
+                      style={
+                        selectedReviewSort === 'lowestRating'
+                          ? styles.sortButtonTextSelected
+                          : styles.sortButtonText
+                      }>
+                      ● 평점 낮은 순
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* 리뷰 작성 UI는 정렬 버튼 아래로 옮김 */}
+                {/* {reviews.length > 0 && ( */}
+                <View style={styles.reviewInputContainer}>
                   <Text
                     style={{
-                      fontSize: 30,
-                      color: '#FFD700', // 노란 테두리 느낌
-                      letterSpacing: 4,
-                      marginBottom: 20,
+                      fontSize: 14,
+                      color: '#333',
+                      marginBottom: 1,
+                      textAlign: 'center',
                     }}>
-                    ☆☆☆☆☆
+                    <Text style={{color: '#3366FF', fontWeight: 'bold'}}>
+                      {selectedStore.name}
+                    </Text>{' '}
+                    다녀오셨어요?{'\n\n'}방문 후기를 남겨주세요!
                   </Text>
-                </TouchableOpacity>
 
-                {/* 리뷰 목록 컴포넌트 추가 */}
+                  <TouchableOpacity
+                    onPress={handleReviewPress}
+                    style={{
+                      alignItems: 'center',
+                      marginTop: 13,
+                    }}>
+                    <Text
+                      style={{
+                        fontSize: 30,
+                        color: '#FFD700',
+                        letterSpacing: 4,
+                        marginBottom: 20,
+                      }}>
+                      ☆☆☆☆☆
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+                {/* )} */}
 
-                <ReviewList storeId={selectedStore.id} showAverage={true} />
+                <ReviewList
+                  storeId={selectedStore.id}
+                  showAverage={true}
+                  sortBy={selectedReviewSort}
+                  onReviewsLoaded={handleReviewsLoaded} // ⭐ ReviewList에서 로드된 리뷰 전달
+                />
               </View>
             )}
           </View>
@@ -588,6 +780,13 @@ const IndoorInfoSheet = ({
                   />
                 );
               })}
+              {selectedCategory !== null && (
+                <CategoryButton
+                  label="모든 가게 보기"
+                  onPress={() => handleCategoryPress(null)}
+                  isSelected={false}
+                />
+              )}
             </View>
 
             <Text style={[styles.sectionTitle, styles.nearbyTitle]}>
@@ -607,7 +806,6 @@ const IndoorInfoSheet = ({
               })}
             </View>
 
-            {/* 주변 정보 하위 타이틀 */}
             {selectedCategory &&
               !productCategories.includes(selectedCategory) && (
                 <Text style={[styles.sectionTitle, styles.marketTitle]}>
@@ -625,6 +823,12 @@ const IndoorInfoSheet = ({
                   {marketName} 상점들
                 </Text>
               )}
+
+            {!selectedCategory && (
+              <Text style={[styles.sectionTitle, styles.marketTitle]}>
+                {marketName} 상점들
+              </Text>
+            )}
 
             {selectedCategory === '근처놀거리' && weatherData && (
               <>
@@ -661,66 +865,106 @@ const IndoorInfoSheet = ({
                       type="실내놀거리"
                       latitude={selectedMarketCenter.latitude}
                       longitude={selectedMarketCenter.longitude}
+                      marketId={marketId} // ⭐ props로 받은 marketId를 전달합니다.
                     />
                   ) : (
                     <AroundInfo
                       type="관광지"
                       latitude={selectedMarketCenter.latitude}
                       longitude={selectedMarketCenter.longitude}
+                      marketId={marketId} // ⭐ props로 받은 marketId를 전달합니다.
                     />
                   )}
                 </>
               )}
 
-            {selectedCategory === '주차장' && <ParkingInfo />}
+            {/* ⭐ 주차장 정보 렌더링 조건부 추가 */}
+            {selectedCategory === '주차장' && (
+              <ParkingInfo
+                centerLat={centerLat}
+                centerLng={centerLng}
+                webViewRef={webViewRef}
+                onParkingData={setParkingPlaces} // 부모 컴포넌트의 상태 업데이트 함수
+                onItemPress={(lat, lng) => {
+                  webViewRef.current?.postMessage(
+                    JSON.stringify({
+                      type: 'MOVE_TO_PARKING_PLACE',
+                      mode: 'parking',
+                      lat,
+                      lng,
+                    }),
+                  );
+                }}
+                parkingPlaces={parkingPlaces}
+              />
+            )}
 
-            {storeList.map((store, idx) => {
-              const imageSource = store.image
-                ? {uri: store.image}
-                : defaultImage;
-              let distance = '';
-              if (currentPosition) {
-                distance = getDistanceFromLatLonInKm(
-                  currentPosition.latitude,
-                  currentPosition.longitude,
-                  store.center_lat,
-                  store.center_lng,
-                );
-              }
-              return (
-                <TouchableOpacity
-                  key={idx}
-                  onPress={() => {
-                    setSelectedStore(store);
-                    setSelectedTab('home');
-                  }}>
-                  <View style={styles.storeCard}>
-                    <Image source={imageSource} style={styles.storeImage} />
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        marginBottom: 4,
-                      }}>
-                      <Text style={styles.storeName}>{store.name}</Text>
-                      {store.is_affiliate && (
-                        <Text style={styles.storeAffiliate}>
-                          지역화폐 가맹점
+            {/* 주차장, 화장실, 근처 놀거리가 아닐 때만 상점 목록 렌더링 */}
+            {selectedCategory !== '주차장' &&
+              selectedCategory !== '화장실' &&
+              selectedCategory !== '근처놀거리' &&
+              storeList.map((store, idx) => {
+                const imageSource = store.image
+                  ? {uri: store.image}
+                  : defaultImage;
+                let distance = '';
+                if (currentPosition) {
+                  distance = getDistanceFromLatLonInKm(
+                    currentPosition.latitude,
+                    currentPosition.longitude,
+                    store.center_lat,
+                    store.center_lng,
+                  );
+                }
+                return (
+                  <TouchableOpacity
+                    key={idx}
+                    onPress={() => {
+                      setSelectedStore(store);
+                      setSelectedTab('home');
+                      onSelectStore(store);
+                    }}>
+                    <View style={styles.storeCard}>
+                      <Image source={imageSource} style={styles.storeImage} />
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          marginBottom: 4,
+                        }}>
+                        <Text style={styles.storeName}>{store.name}</Text>
+                        {store.is_affiliate && (
+                          <Text style={styles.storeAffiliate}>
+                            지역화폐 가맹점
+                          </Text>
+                        )}
+                      </View>
+                      <Text style={styles.storeDesc}>
+                        {store.description || '설명 없음'}
+                      </Text>
+                      {distance && (
+                        <Text style={styles.storeDistance}>
+                          현재 위치에서 {distance}km
                         </Text>
                       )}
                     </View>
-                    <Text style={styles.storeDesc}>
-                      {store.description || '설명 없음'}
-                    </Text>
-                    {distance && (
-                      <Text style={styles.storeDistance}>
-                        현재 위치에서 {distance}km
-                      </Text>
-                    )}
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
+                  </TouchableOpacity>
+                );
+              })}
+            {/* 상점 목록이 비어있고, 주차장/화장실/근처놀거리 카테고리가 아닐 때 "상점 정보 없음" 표시 */}
+            {storeList.length === 0 &&
+              !selectedCategory && ( // 초기 상태 (카테고리 선택 안 함) 또는 카테고리 필터링 결과 없음
+                <Text style={styles.noStoreText}>
+                  {marketName}에 등록된 상점 정보가 없습니다.
+                </Text>
+              )}
+            {storeList.length === 0 &&
+              selectedCategory &&
+              productCategories.includes(selectedCategory) && ( // 상점 카테고리 선택 후 결과 없음
+                <Text style={styles.noStoreText}>
+                  선택한 카테고리의 상점 정보가 없습니다.
+                </Text>
+              )}
           </>
         )}
       </View>
@@ -776,7 +1020,6 @@ const styles = StyleSheet.create({
   storeDistance: {color: '#f55', fontSize: 13, fontWeight: '500'},
 
   storeAffiliate: {
-    // 가맹점
     fontSize: 13,
     fontWeight: '600',
     color: '#3366ff',
@@ -786,7 +1029,7 @@ const styles = StyleSheet.create({
   storeNameTitle: {
     fontSize: 20,
     fontWeight: '700',
-    marginBottom: 20, // 상점명과 이미지 사이의 간격
+    marginBottom: 20,
     marginLeft: 0,
     textAlign: 'center',
   },
@@ -807,27 +1050,80 @@ const styles = StyleSheet.create({
 
   storeContact: {marginTop: 5, fontSize: 14, marginBottom: -20},
 
-  menuTitle: {fontSize: 15, fontWeight: '600', marginTop: 10, marginBottom: 10},
-
+  // 추가된 스타일
+  noStoreText: {
+    textAlign: 'center',
+    marginTop: 20,
+    fontSize: 15,
+    color: '#888',
+  },
+  menuTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    marginTop: 10,
+  },
+  productItem: {
+    fontSize: 14,
+    marginBottom: 5,
+    color: '#555',
+  },
+  businessHourContainer: {
+    marginBottom: 10,
+    marginTop: 10,
+  },
+  businessHourRow: {
+    fontSize: 13,
+    color: '#666',
+    marginLeft: 10,
+  },
   contactRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    justifyContent: 'space-between',
+    marginBottom: 20,
   },
-
-  businessHourContainer: {
-    marginBottom: 12,
+  reviewSortButtons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    marginTop: 10,
+    marginBottom: 20,
+    paddingHorizontal: 12,
   },
-  businessHourRow: {
-    fontSize: 14,
-    color: '#333',
-    lineHeight: 20,
+  sortButton: {
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    marginRight: 8,
   },
-
-  productItem: {
-    fontSize: 14,
-    color: '#444',
-    marginTop: 4,
+  sortButtonSelected: {
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: '#3366FF',
+    backgroundColor: '#E6F0FF',
+    marginRight: 8,
+  },
+  sortButtonText: {
+    fontSize: 13,
+    color: '#555',
+  },
+  sortButtonTextSelected: {
+    fontSize: 13,
+    color: '#3366FF',
+    fontWeight: 'bold',
+  },
+  reviewInputContainer: {
+    backgroundColor: '#f9f9f9',
+    borderRadius: 10,
+    padding: 15,
+    marginVertical: 10,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#eee',
   },
 });
 

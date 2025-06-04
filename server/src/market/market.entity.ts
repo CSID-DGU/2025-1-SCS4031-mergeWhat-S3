@@ -33,9 +33,6 @@ export class Market extends BaseEntity {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @DeleteDateColumn()
-  deletedAt: Date | null;
-
   @OneToMany(() => Store, (store) => store.market)
   stores: Store[];
 }

@@ -1,8 +1,8 @@
-// front/src/components/IndoorInfo/Around.tsx
+// components/IndoorInfo/Around.tsx
 import React, {useEffect, useState} from 'react';
-import {View, Text, ActivityIndicator, Image} from 'react-native';
-import Geolocation from '@react-native-community/geolocation';
+import {View, Text, ActivityIndicator, Image, StyleSheet} from 'react-native';
 import defaultImage from '../../assets/시장기본이미지.png';
+import {fetchPlaceImage} from '../../api/market';
 
 type Place = {
   id: string;
@@ -10,24 +10,39 @@ type Place = {
   category_name: string;
   address_name: string;
   distance: string;
+  imageUrlFromDB?: string;
 };
 
 type AroundProps = {
-  type: '실내놀거리' | '관광지'; // 검색 키워드
+  type: '실내놀거리' | '관광지';
   latitude: number;
   longitude: number;
+  marketId: number; // ⭐ marketId 추가
 };
 
-const AroundInfo = ({type, latitude, longitude}: AroundProps) => {
+const AroundInfo = ({type, latitude, longitude, marketId}: AroundProps) => {
+  // ⭐ marketId props로 받음
   const [places, setPlaces] = useState<Place[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log('🌐 REST API 호출 좌표:', latitude, longitude);
+    // marketId가 유효한지도 여기서 체크할 수 있습니다.
+    if (!latitude || !longitude || !marketId) {
+      // ⭐ marketId 유효성 검사 추가
+      console.warn(
+        '[⚠️ AroundInfo] 유효한 시장 좌표 또는 시장 ID가 없어 장소 검색을 스킵합니다.',
+      );
+      setPlaces([]);
+      setLoading(false);
+      return;
+    }
 
-    const fetchPlaces = async () => {
+    console.log('🌐 Kakao REST API 호출 좌표:', latitude, longitude);
+
+    const fetchPlacesAndImages = async () => {
+      setLoading(true);
       try {
-        const response = await fetch(
+        const kakaoResponse = await fetch(
           `https://dapi.kakao.com/v2/local/search/keyword.json?query=${type}&x=${longitude}&y=${latitude}&radius=1000&size=10`,
           {
             method: 'GET',
@@ -37,12 +52,17 @@ const AroundInfo = ({type, latitude, longitude}: AroundProps) => {
           },
         );
 
-        const data = await response.json();
-        console.log(`✅ REST API 검색 결과 (${type}):`, data);
+        if (!kakaoResponse.ok) {
+          throw new Error(
+            `Kakao API Error: ${kakaoResponse.status} ${kakaoResponse.statusText}`,
+          );
+        }
 
-        let results = data.documents || [];
+        const kakaoData = await kakaoResponse.json();
+        console.log(`✅ Kakao REST API 검색 결과 (${type}):`, kakaoData);
 
-        // 필터링: 실내놀거리에서 '커피전문점' 제거
+        let results: Place[] = kakaoData.documents || [];
+
         if (type === '실내놀거리') {
           results = results.filter(
             (item: any) =>
@@ -50,7 +70,31 @@ const AroundInfo = ({type, latitude, longitude}: AroundProps) => {
           );
         }
 
-        setPlaces(results);
+        const placesWithImages = await Promise.all(
+          results.map(async place => {
+            const isIndoor = type === '실내놀거리'; // '실내놀거리'면 true, '관광지'면 false
+            try {
+              // ⭐ fetchPlaceImage 호출 시 marketId 전달
+              const imageData = await fetchPlaceImage(
+                marketId,
+                place.place_name,
+                isIndoor,
+              );
+              return {
+                ...place,
+                imageUrlFromDB: imageData ? imageData.image_url : undefined,
+              };
+            } catch (imageError) {
+              console.error(
+                `장소 이미지 가져오기 실패 - ${place.place_name}:`,
+                imageError,
+              );
+              return {...place, imageUrlFromDB: undefined};
+            }
+          }),
+        );
+
+        setPlaces(placesWithImages);
       } catch (err) {
         console.error(`❌ ${type} 검색 실패:`, err);
         setPlaces([]);
@@ -59,59 +103,50 @@ const AroundInfo = ({type, latitude, longitude}: AroundProps) => {
       }
     };
 
-    fetchPlaces();
-  }, [type, latitude, longitude]);
+    fetchPlacesAndImages();
+  }, [type, latitude, longitude, marketId]); // ⭐ 의존성 배열에 marketId 추가
 
+  // ... (이후 렌더링 로직은 동일)
   if (loading) {
-    return <ActivityIndicator size="large" color="#000" />;
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color="#000" />
+      </View>
+    );
   }
 
   return (
-    <View style={{padding: 16}}>
+    <View style={styles.container}>
       {places.length === 0 ? (
-        <Text style={{color: '#888'}}>검색 결과가 없습니다.</Text>
+        <Text style={styles.noResultsText}>검색 결과가 없습니다.</Text>
       ) : (
         places.map((place, index) => {
           const distanceKm = (parseFloat(place.distance) / 1000).toFixed(1);
 
-          // category_name 파싱
-          const category = place.category_name
-            ? place.category_name.split(' > ').slice(-2, -1)[0] ?? ''
-            : '';
+          const categoryParts = place.category_name
+            ? place.category_name.split(' > ')
+            : [];
+          const displayCategory =
+            categoryParts.length > 0
+              ? categoryParts[categoryParts.length - 1]
+              : '';
 
           return (
-            <View
-              key={index}
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'flex-start',
-                marginBottom: 20,
-                borderBottomWidth: 1,
-                borderColor: '#eee',
-                paddingBottom: 12,
-              }}>
-              <View style={{flex: 1, marginRight: 12}}>
-                <Text
-                  style={{fontWeight: 'bold', fontSize: 15, color: '#3366ff'}}>
-                  {place.place_name}
-                </Text>
-                {category ? (
-                  <Text style={{fontSize: 12, color: '#888', marginBottom: 4}}>
-                    {category}
-                  </Text>
+            <View key={index} style={styles.placeCard}>
+              <View style={styles.placeInfo}>
+                <Text style={styles.placeName}>{place.place_name}</Text>
+                {displayCategory ? (
+                  <Text style={styles.placeCategory}>{displayCategory}</Text>
                 ) : null}
-                <Text style={{fontSize: 12, color: '#f55'}}>
-                  {distanceKm}km
-                </Text>
+                <Text style={styles.placeDistance}>{distanceKm}km</Text>
               </View>
               <Image
-                source={defaultImage}
-                style={{
-                  width: 80,
-                  height: 80,
-                  borderRadius: 8,
-                }}
+                source={
+                  place.imageUrlFromDB
+                    ? {uri: place.imageUrlFromDB}
+                    : defaultImage
+                }
+                style={styles.placeImage}
                 resizeMode="cover"
               />
             </View>
@@ -121,5 +156,53 @@ const AroundInfo = ({type, latitude, longitude}: AroundProps) => {
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  centered: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  container: {
+    padding: 16,
+  },
+  noResultsText: {
+    color: '#888',
+    textAlign: 'center',
+    paddingVertical: 20,
+  },
+  placeCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 20,
+    borderBottomWidth: 1,
+    borderColor: '#eee',
+    paddingBottom: 12,
+  },
+  placeInfo: {
+    flex: 1,
+    marginRight: 12,
+  },
+  placeName: {
+    fontWeight: 'bold',
+    fontSize: 15,
+    color: '#3366ff',
+  },
+  placeCategory: {
+    fontSize: 12,
+    color: '#888',
+    marginBottom: 4,
+  },
+  placeDistance: {
+    fontSize: 12,
+    color: '#f55',
+  },
+  placeImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+  },
+});
 
 export default AroundInfo;

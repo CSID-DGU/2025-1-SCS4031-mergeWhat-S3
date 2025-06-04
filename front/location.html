@@ -1,7 +1,3 @@
-// @ts-nocheck
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-
-const htmlContent = `
 <!DOCTYPE html>
 <html lang="ko">
   <head>
@@ -9,7 +5,8 @@ const htmlContent = `
     <title>Kakao Map Indoor</title>
     <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=7fe9c6b0107267e90bf2f78c90050d42&libraries=services,drawing"></script>
     <style>
-      html,body {
+      html,
+      body {
         margin: 0;
         padding: 0;
         height: 100%;
@@ -18,43 +15,44 @@ const htmlContent = `
         width: 100%;
         height: 100%;
       }
-        /* 주차장 마커용 인포윈도우 스타일 (기존 kakaoHTML에 없었지만 추가) */
-      .parking-infowindow {
-        padding:5px;
-        font-size:12px;
-        background-color: white;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-      }
-      /* 기존 시장 폴리곤 오버레이 스타일 (이전 답변에서 임의 추가했던 스타일) */
-      .info-bubble { 
-          background-color: white;
-          border: 1px solid #ccc;
-          border-radius: 5px;
-          padding: 5px 10px;
-          font-size: 14px;
-          font-weight: bold;
-          white-space: nowrap;
-          text-align: center;
-          pointer-events: none; /* 오버레이 아래 지도를 클릭할 수 있도록 */
-      }
     </style>
   </head>
   <body>
     <div id="map"></div>
     <script>
-      const map = new kakao.maps.Map(document.getElementById("map"), {
+      const map = new kakao.maps.Map(document.getElementById('map'), {
         center: new kakao.maps.LatLng(37.570344507734944, 127.00174887659568),
         level: 3,
       });
 
-      window.currentMapMode = 'market'
-      
+      // 마커를 저장할 변수 (하나만 남기고 싶을 때 사용)
+      let currentMarker = null;
+
+      // 지도 클릭 이벤트 등록
+      kakao.maps.event.addListener(map, 'click', function (mouseEvent) {
+        const latlng = mouseEvent.latLng;
+
+        // 이전 마커 제거
+        if (currentMarker) {
+          currentMarker.setMap(null);
+        }
+
+        // 새 마커 생성
+        currentMarker = new kakao.maps.Marker({
+          position: latlng,
+          map: map,
+        });
+
+        // 콘솔에 클릭한 곳 위치 좌표 출력
+        console.log(
+          `new kakao.maps.LatLng(${latlng.getLat()}, ${latlng.getLng()}),`,
+        );
+      });
 
       // 📌 시장 검색결과 -> 버튼시트에 있는 시장명 클릭하면 시장 중심위치로 화면 이동
-      document.addEventListener("message", function (event) {
+      document.addEventListener('message', function (event) {
         const message = JSON.parse(event.data);
-        if (message.type === "moveCenter" && message.lat && message.lng) {
+        if (message.type === 'moveCenter' && message.lat && message.lng) {
           const newCenter = new kakao.maps.LatLng(message.lat, message.lng);
           map.setCenter(newCenter);
         }
@@ -67,7 +65,7 @@ const htmlContent = `
 
       const mainPolygons = [
         {
-          name: "광장시장", // 📌 광장시장
+          name: '광장시장', // 📌 광장시장
           path: [
             new kakao.maps.LatLng(37.570668867836574, 126.99837563184579),
             new kakao.maps.LatLng(37.57035802039376, 126.9981039683968),
@@ -84,7 +82,7 @@ const htmlContent = `
           ],
           indoor: [
             {
-              name: "a",
+              name: 'a',
               path: [
                 new kakao.maps.LatLng(37.569405217076785, 126.99806437448336),
                 new kakao.maps.LatLng(37.569247543091684, 126.99807852784318),
@@ -95,7 +93,7 @@ const htmlContent = `
             },
 
             {
-              name: "광장순복음교회",
+              name: '광장순복음교회',
               path: [
                 // 광장순복음교회
                 new kakao.maps.LatLng(37.569405217076785, 126.99806437448336),
@@ -106,7 +104,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "아피아상가, 구제천국",
+              name: '아피아상가, 구제천국',
               path: [
                 // 아피아상가, 구제천국
                 new kakao.maps.LatLng(37.56972506953239, 126.99800776872678),
@@ -116,7 +114,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "파인플러스, 바다극장",
+              name: '파인플러스, 바다극장',
               path: [
                 // 파인플러스, 바다극장
                 new kakao.maps.LatLng(37.569463786124764, 126.99835018924),
@@ -128,7 +126,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "동양빌딩, 영신상가",
+              name: '동양빌딩, 영신상가',
               path: [
                 // 동양빌딩, 영신상가
                 new kakao.maps.LatLng(37.569477303519584, 126.99853696000501),
@@ -141,7 +139,7 @@ const htmlContent = `
             },
 
             {
-              name: "기훈상사, 예지빌딩",
+              name: '기훈상사, 예지빌딩',
               path: [
                 // 기훈상사, 예지빌딩
                 new kakao.maps.LatLng(37.56979039909291, 126.99850865511642),
@@ -154,7 +152,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "비와이상가, 밀라노",
+              name: '비와이상가, 밀라노',
               path: [
                 // 비와이상가, 밀라노
                 new kakao.maps.LatLng(37.569846714601745, 126.99879730160771),
@@ -164,7 +162,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "b",
+              name: 'b',
               path: [
                 new kakao.maps.LatLng(37.56985122465456, 126.99950194134165),
                 new kakao.maps.LatLng(37.56959444101853, 126.99951892226566),
@@ -175,7 +173,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "샤넬의상실",
+              name: '샤넬의상실',
               path: [
                 // 샤넬의상실
                 new kakao.maps.LatLng(37.56985798308954, 126.99986133592918),
@@ -185,7 +183,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "국민은행",
+              name: '국민은행',
               path: [
                 //kb국민은행
                 new kakao.maps.LatLng(37.56969355062163, 126.99954439048318),
@@ -197,7 +195,7 @@ const htmlContent = `
             },
 
             {
-              name: "메가커피",
+              name: '메가커피',
               path: [
                 // 메가커피
                 new kakao.maps.LatLng(37.569860235587804, 126.99986982556226),
@@ -210,7 +208,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "대성빌딩",
+              name: '대성빌딩',
               path: [
                 // 대성빌딩
                 new kakao.maps.LatLng(37.569950331576216, 127.00092537157438),
@@ -221,7 +219,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "정림커텐",
+              name: '정림커텐',
               path: [
                 //정림커텐
                 new kakao.maps.LatLng(37.569815182035505, 127.00095366867612),
@@ -234,7 +232,7 @@ const htmlContent = `
             },
 
             {
-              name: "개미상회",
+              name: '개미상회',
               path: [
                 //개미상회
                 new kakao.maps.LatLng(37.56989402187734, 127.00051220834516),
@@ -247,7 +245,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "색동저고리",
+              name: '색동저고리',
               path: [
                 // 색동저고리
                 new kakao.maps.LatLng(37.56990077922985, 127.00053767731698),
@@ -258,7 +256,7 @@ const htmlContent = `
             },
 
             {
-              name: "새마을금고",
+              name: '새마을금고',
               path: [
                 // 새마을금고
                 new kakao.maps.LatLng(37.56991429333324, 127.00069615075724),
@@ -269,7 +267,7 @@ const htmlContent = `
             },
 
             {
-              name: "담아김밥",
+              name: '담아김밥',
               path: [
                 // 담아김밥
                 new kakao.maps.LatLng(37.56993231236272, 127.00083198525176),
@@ -283,7 +281,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "우리은행, 수입구제 상가",
+              name: '우리은행, 수입구제 상가',
               path: [
                 //우리은행, 수입구제 상가
                 new kakao.maps.LatLng(37.57045713219646, 126.9982539506726),
@@ -295,7 +293,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "수입구제 상가 위 삼각형",
+              name: '수입구제 상가 위 삼각형',
               path: [
                 // 수입구제 상가 위 삼각형
                 new kakao.maps.LatLng(37.57045713632109, 126.99855958005233),
@@ -306,7 +304,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "원제인삼",
+              name: '원제인삼',
               path: [
                 // 원제인삼
                 new kakao.maps.LatLng(37.570653100956996, 126.99841525091531),
@@ -318,7 +316,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "승우네식당",
+              name: '승우네식당',
               path: [
                 // 승우네식당
                 new kakao.maps.LatLng(37.57067562985022, 126.99874917980996),
@@ -329,7 +327,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "c",
+              name: 'c',
               path: [
                 new kakao.maps.LatLng(37.570695903471346, 126.99887086563098),
                 new kakao.maps.LatLng(37.57044362509844, 126.99890482825333),
@@ -338,7 +336,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "새마을상가",
+              name: '새마을상가',
               path: [
                 //새마을상가
                 new kakao.maps.LatLng(37.570274678276554, 126.99810114061475),
@@ -352,7 +350,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "60년전통떡집",
+              name: '60년전통떡집',
               path: [
                 // 60년전통떡집
                 new kakao.maps.LatLng(37.570247651516596, 126.99830489365009),
@@ -363,7 +361,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "종로창고",
+              name: '종로창고',
               path: [
                 // 종로창고
                 new kakao.maps.LatLng(37.57004042093917, 126.99819453279655),
@@ -374,7 +372,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "신촌꽃게장",
+              name: '신촌꽃게장',
               path: [
                 // 신촌꽃게장
                 new kakao.maps.LatLng(37.570272435550585, 126.9988595524451),
@@ -386,7 +384,7 @@ const htmlContent = `
             },
 
             {
-              name: "사각형1-1",
+              name: '사각형1-1',
               path: [
                 // 사각형1
                 new kakao.maps.LatLng(37.5702566717986, 126.99934063467917),
@@ -396,7 +394,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "사각형1-2 갈릭보이",
+              name: '사각형1-2 갈릭보이',
               path: [
                 // 사각형2 갈릭보이
                 new kakao.maps.LatLng(37.57016206740727, 126.99936327463719),
@@ -406,7 +404,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "사각형1-3 남강실크",
+              name: '사각형1-3 남강실크',
               path: [
                 // 사각형3 남강실크
                 new kakao.maps.LatLng(37.57003818053929, 126.99936327569182),
@@ -416,7 +414,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "사각형2-1",
+              name: '사각형2-1',
               path: [
                 // 사각형1
                 new kakao.maps.LatLng(37.57027694603591, 126.99999717010517),
@@ -427,7 +425,7 @@ const htmlContent = `
             },
 
             {
-              name: "사각형2-2 평창칼국수",
+              name: '사각형2-2 평창칼국수',
               path: [
                 // 사각형2 평창칼국수
                 new kakao.maps.LatLng(37.570180088152995, 127.00045561248051),
@@ -440,7 +438,7 @@ const htmlContent = `
             },
 
             {
-              name: "사각형2-3 예본한복",
+              name: '사각형2-3 예본한복',
               path: [
                 //사각형3 예본한복
                 new kakao.maps.LatLng(37.570033677279135, 127.00000565977129),
@@ -452,7 +450,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "사각형3-1",
+              name: '사각형3-1',
               path: [
                 //사각형1
                 new kakao.maps.LatLng(37.5703062272373, 127.00052070085587),
@@ -463,7 +461,7 @@ const htmlContent = `
             },
 
             {
-              name: "사각형3-2 화개장터",
+              name: '사각형3-2 화개장터',
               path: [
                 // 사각형2 화개장터
                 new kakao.maps.LatLng(37.5701868453493, 127.00052070002478),
@@ -475,7 +473,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "사각형3-3",
+              name: '사각형3-3',
               path: [
                 // 사각형3
                 new kakao.maps.LatLng(37.5701012504816, 127.00058578685751),
@@ -487,7 +485,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "삼각형 전라도횟집",
+              name: '삼각형 전라도횟집',
               path: [
                 // 삼각형 전라도횟집
                 new kakao.maps.LatLng(37.57028820558621, 127.00082632942),
@@ -496,7 +494,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "농협은행",
+              name: '농협은행',
               path: [
                 // 농협은행
                 new kakao.maps.LatLng(37.570693654107565, 126.99926705315093),
@@ -506,7 +504,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "화창빌딩",
+              name: '화창빌딩',
               path: [
                 // 화창빌딩
                 new kakao.maps.LatLng(37.570517960174364, 126.99929252400833),
@@ -516,7 +514,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "합동빌딩",
+              name: '합동빌딩',
               path: [
                 // 합동빌딩
                 new kakao.maps.LatLng(37.57041659824836, 126.9993010146675),
@@ -526,7 +524,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "d",
+              name: 'd',
               path: [
                 new kakao.maps.LatLng(37.57068915049398, 126.99953589468721),
                 new kakao.maps.LatLng(37.570565263670176, 126.9995443851732),
@@ -539,7 +537,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "부촌육회",
+              name: '부촌육회',
               path: [
                 //부촌육회
                 new kakao.maps.LatLng(37.570707171126756, 126.99979058657672),
@@ -549,7 +547,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "e",
+              name: 'e',
               path: [
                 new kakao.maps.LatLng(37.570558506922865, 126.99980473652046),
                 new kakao.maps.LatLng(37.57031073312314, 126.99976228872539),
@@ -558,7 +556,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "종로우리약국",
+              name: '종로우리약국',
               path: [
                 // 종로우리약국
                 new kakao.maps.LatLng(37.57076348344736, 127.0001301760098),
@@ -569,7 +567,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "은성횟집",
+              name: '은성횟집',
               path: [
                 // 은성회집
                 new kakao.maps.LatLng(37.57052697224729, 127.00000848971293),
@@ -579,7 +577,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "열린약국",
+              name: '열린약국',
               path: [
                 //열린약국
                 new kakao.maps.LatLng(37.570754473452006, 127.0001641349491),
@@ -589,7 +587,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "신성주단",
+              name: '신성주단',
               path: [
                 // 신성주단
                 new kakao.maps.LatLng(37.570529224135974, 127.00037637728427),
@@ -599,7 +597,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "광장시장 전골목쪽",
+              name: '광장시장 전골목쪽',
               path: [
                 // 광장시장 전골목쪽
                 new kakao.maps.LatLng(37.5705630107845, 127.00054900170024),
@@ -610,7 +608,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "모녀김밥",
+              name: '모녀김밥',
               path: [
                 //모녀김밥
                 new kakao.maps.LatLng(37.57031298197603, 127.00095650491942),
@@ -621,7 +619,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "참신육회",
+              name: '참신육회',
               path: [
                 //참신육회
                 new kakao.maps.LatLng(37.5703310004126, 127.00112346906653),
@@ -632,7 +630,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "365일장",
+              name: '365일장',
               path: [
                 //365일장
                 new kakao.maps.LatLng(37.57022287769758, 127.00142626597228),
@@ -644,7 +642,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "쑥스초코파이서울 + cu",
+              name: '쑥스초코파이서울 + cu',
               path: [
                 // 쑥스초코파이서울 + cu
                 new kakao.maps.LatLng(37.56993681255444, 127.00134985370396),
@@ -657,7 +655,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "호남집",
+              name: '호남집',
               path: [
                 // 호남집
                 new kakao.maps.LatLng(37.570328743992484, 127.00148003603037),
@@ -667,7 +665,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "종로본 정형외과의원",
+              name: '종로본 정형외과의원',
               path: [
                 // 종로본 정형외과의원
                 new kakao.maps.LatLng(37.57011475719429, 127.00151116057188),
@@ -678,7 +676,7 @@ const htmlContent = `
               ],
             },
             {
-              name: 17,
+              name: '감탄수제누룽지 + 박가네빈대떡',
               path: [
                 //감탄수제누룽지+박가네빈대떡
                 new kakao.maps.LatLng(37.570795017408685, 127.00047259571308),
@@ -687,7 +685,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "소상공인e커머스 + 육회빈대떡",
+              name: '소상공인e커머스 + 육회빈대떡',
               path: [
                 //소상공인E커머스, 육회빈대떡
                 new kakao.maps.LatLng(37.57052471611026, 127.00092820858494),
@@ -698,7 +696,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "새동서약국",
+              name: '새동서약국',
               path: [
                 // 새동서약국
                 new kakao.maps.LatLng(37.57054498240994, 127.00151682907415),
@@ -708,7 +706,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "종로 5가 파출소",
+              name: '종로 5가 파출소',
               path: [
                 //종로5가파출소
                 new kakao.maps.LatLng(37.57078149404089, 127.00148853473125),
@@ -718,7 +716,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "종로5가파출소 위",
+              name: '종로5가파출소 위',
               path: [
                 //종로5가파출소 위.
                 new kakao.maps.LatLng(37.570867088700396, 127.0014800466832),
@@ -728,7 +726,7 @@ const htmlContent = `
               ],
             },
             {
-              name: "종로5가하이뷰오피스텔",
+              name: '종로5가하이뷰오피스텔',
               path: [
                 //종로5가하이뷰오피스텔
                 new kakao.maps.LatLng(37.57081078212327, 127.00092821213508),
@@ -740,7 +738,7 @@ const htmlContent = `
           ],
         },
         {
-          name: "인현시장", // 📌 인현시장
+          name: '인현시장', // 📌 인현시장
           path: [
             new kakao.maps.LatLng(37.5623435979591, 126.99569618639049),
             new kakao.maps.LatLng(37.56313647146205, 126.99560276316363),
@@ -754,7 +752,7 @@ const htmlContent = `
           ],
           indoor: [
             {
-              name: "인현시장 indoor",
+              name: '인현시장 indoor',
               path: [
                 new kakao.maps.LatLng(37.5628909333489, 126.99517833527825),
                 new kakao.maps.LatLng(37.56289542947373, 126.99496611381733),
@@ -764,77 +762,107 @@ const htmlContent = `
             },
           ],
         },
-        
+        /*{
+          name: "중부건어물시장", // 📌 중부건어물시장
+          path: [
+            new kakao.maps.LatLng(37.5658575524942, 127.00150258538618),
+            new kakao.maps.LatLng(37.56464120608668, 127.00162423726614),
+            new kakao.maps.LatLng(37.564560126854516, 127.0004187924301),
+            new kakao.maps.LatLng(37.5644520042859, 126.9990577183942),
+            new kakao.maps.LatLng(37.56543408940294, 126.99896998496324),
+            new kakao.maps.LatLng(37.56563230943457, 126.99907751156121),
+            new kakao.maps.LatLng(37.56565033189786, 126.99949913959202),
+            new kakao.maps.LatLng(37.56566159488989, 126.9996491146896),
+            new kakao.maps.LatLng(37.565702139935254, 126.99973400615279),
+            new kakao.maps.LatLng(37.565771967268944, 126.999804749015),
+          ],
+        },
+        {
+          name: "방산시장",
+          path: [
+            new kakao.maps.LatLng(37.56893445363642, 127.0014686890651),
+            new kakao.maps.LatLng(37.56889391791083, 127.00011885338597),
+            new kakao.maps.LatLng(37.568454682542374, 127.00012168251394),
+            new kakao.maps.LatLng(37.56842990403854, 127.00052917726902),
+            new kakao.maps.LatLng(37.56800868865217, 127.00050653581688),
+            new kakao.maps.LatLng(37.568024454029725, 127.00086026212728),
+            new kakao.maps.LatLng(37.56822942921804, 127.00102722371027),
+            new kakao.maps.LatLng(37.5683600735422, 127.00103288514903),
+            new kakao.maps.LatLng(37.56844791614255, 127.00145736020939),
+          ],
+        },
+        {
+          name: "명동야시장",
+          path: [
+            new kakao.maps.LatLng(37.560997997528254, 126.98509113345622),
+            new kakao.maps.LatLng(37.56106567911781, 126.9859626202592),
+            new kakao.maps.LatLng(37.56208827705452, 126.98568512906331),
+            new kakao.maps.LatLng(37.562768498297025, 126.9854303339426),
+            new kakao.maps.LatLng(37.56336764127526, 126.98527175778985),
+            new kakao.maps.LatLng(37.56379109681798, 126.98516980704463),
+            new kakao.maps.LatLng(37.56409307323349, 126.98635254543659),
+            new kakao.maps.LatLng(37.56427776960165, 126.9862845997144),
+            new kakao.maps.LatLng(37.56413345971158, 126.9850452340309),
+            new kakao.maps.LatLng(37.56398010892009, 126.98367571088328),
+            new kakao.maps.LatLng(37.563961939589795, 126.98262874215594),
+            new kakao.maps.LatLng(37.563997964409474, 126.98252686612884),
+            new kakao.maps.LatLng(37.563578976714155, 126.98236284478304),
+            new kakao.maps.LatLng(37.563624190191064, 126.98349469138347),
+            new kakao.maps.LatLng(37.563714423383274, 126.98447938848095),
+            new kakao.maps.LatLng(37.56272336198344, 126.98474557733383),
+            new kakao.maps.LatLng(37.5615746239614, 126.98500047245444),
+          ],
+        },*/
       ];
 
-
-
       const highlightOption = {
-        fillColor: "#EDF1FF",
+        fillColor: '#EDF1FF',
         fillOpacity: 0.8,
       };
 
       const resetOption = {
-        fillColor: "#B2C3F4",
+        fillColor: '#B2C3F4',
         fillOpacity: 0.7,
       };
 
       const allMainPolygons = [];
       const allIndoorPolygons = [];
 
-      mainPolygons.forEach(({ name, path, indoor }) => {
+      mainPolygons.forEach(({name, path, indoor}) => {
         const mainPolygon = new kakao.maps.Polygon({
           path,
           strokeWeight: 3,
-          strokeColor: "#6182DF",
+          strokeColor: '#6182DF',
           fillColor: resetOption.fillColor,
           fillOpacity: resetOption.fillOpacity,
         });
         mainPolygon.setMap(map);
         allMainPolygons.push(mainPolygon);
 
-        const indoorPolygons = indoor.map(({ name: indoorName, path }) => {
+        const indoorPolygons = indoor.map(({name: indoorName, path}) => {
           const polygon = new kakao.maps.Polygon({
             path,
             strokeWeight: 1,
-            strokeColor: "#6182DF",
+            strokeColor: '#6182DF',
             fillColor: resetOption.fillColor,
             fillOpacity: resetOption.fillOpacity,
           });
 
-
-
-/*function initMap() {
-  map = new kakao.maps.Map(...);
-
-  if (window.ReactNativeWebView) {
-    window.ReactNativeWebView.postMessage(JSON.stringify({
-      type: 'mapReady'
-    }));
-  }
-}*/
-
-var parkingInfoWindow = new kakao.maps.InfoWindow({ zIndex: 1 });
-
-
-
-
-          //✅ indoor polygon 클릭 이벤트
-          kakao.maps.event.addListener(polygon, "click", () => {
+          // indoor polygon 클릭시 indoor_name 표시, 색깔 변화
+          kakao.maps.event.addListener(polygon, 'click', () => {
             polygon.setOptions(highlightOption);
             setTimeout(() => polygon.setOptions(resetOption), 300);
-            
 
             if (window.ReactNativeWebView) {
               if (name) {
                 window.ReactNativeWebView.postMessage(
                   JSON.stringify({
-                    type: "indoorClick",
+                    type: 'indoorClick',
                     name: indoorName,
-                  })
+                  }),
                 );
               } else {
-                console.warn("⚠️ indoor polygon 클릭됨 (name 없음)");
+                console.warn('⚠️ indoor polygon 클릭됨 (name 없음)');
               }
             }
           });
@@ -842,19 +870,19 @@ var parkingInfoWindow = new kakao.maps.InfoWindow({ zIndex: 1 });
           polygon.setMap(null);
           return polygon;
         });
-        allIndoorPolygons.push({ name, polygons: indoorPolygons });
+        allIndoorPolygons.push({name, polygons: indoorPolygons});
       });
 
       // 줌 이벤트 처리
-      kakao.maps.event.addListener(map, "zoom_changed", function () {
+      kakao.maps.event.addListener(map, 'zoom_changed', function () {
         const level = map.getLevel();
         const showIndoor = level <= 1;
 
-        allMainPolygons.forEach((polygon) =>
-          polygon.setMap(showIndoor ? null : map)
+        allMainPolygons.forEach(polygon =>
+          polygon.setMap(showIndoor ? null : map),
         );
-        allIndoorPolygons.forEach(({ polygons }) =>
-          polygons.forEach((p) => p.setMap(showIndoor ? map : null))
+        allIndoorPolygons.forEach(({polygons}) =>
+          polygons.forEach(p => p.setMap(showIndoor ? map : null)),
         );
         updatePolygonVisibility();
       });
@@ -863,319 +891,13 @@ var parkingInfoWindow = new kakao.maps.InfoWindow({ zIndex: 1 });
         const level = map.getLevel();
         const showIndoor = level <= 1;
 
-        allMainPolygons.forEach((polygon) =>
-          polygon.setMap(showIndoor ? null : map)
+        allMainPolygons.forEach(polygon =>
+          polygon.setMap(showIndoor ? null : map),
         );
-        allIndoorPolygons.forEach(({ polygons }) =>
-          polygons.forEach((p) => p.setMap(showIndoor ? map : null))
+        allIndoorPolygons.forEach(({polygons}) =>
+          polygons.forEach(p => p.setMap(showIndoor ? map : null)),
         );
       }
-
-
-// 마커 띄우기
-var markers = []; // 지도에 표시될 마커들을 담을 배열
-
-// 🚩 기존 마커를 모두 제거하는 함수
-function removeAllMarkers() {
-    for (var i = 0; i < markers.length; i++) {
-        markers[i].setMap(null); // 지도에서 마커 제거
-    }
-    markers = []; // 마커 배열 초기화
-}
-
-// 🚩 여러 마커를 추가하는 함수 (MapHomeScreen.tsx의 'addMultipleMarkers'와 매칭)
-function addMultipleMarkers(locations) {
-    
-    removeAllMarkers(); // 새로운 마커를 그리기 전에 기존 마커 제거
-
-    if (locations && Array.isArray(locations)) {
-        locations.forEach(locationData => {
-            
-            if (locationData.lat !== null && locationData.lat !== undefined && locationData.lng !== null && locationData.lng !== undefined) {
-                var markerPosition = new kakao.maps.LatLng(locationData.lat, locationData.lng);
-
-                var marker = new kakao.maps.Marker({
-                    map: map, // 전역 'map' 객체 사용
-                    position: markerPosition,
-                    // 여기에 마커 이미지 설정 등 추가 가능 (예: image 속성 사용)
-                });
-
-                markers.push(marker);
-
-                // 마커 정보창 (InfoWindow)
-                var storeName = locationData.name || '이름 없음';
-                var infowindowContent = '<div style="padding:5px;font-size:12px;">' + storeName + '</div>';
-
-                var infowindow = new kakao.maps.InfoWindow({
-                    content: infowindowContent
-                });
-
-                // 마커 클릭 시 정보창 열기 이벤트 리스너
-                kakao.maps.event.addListener(marker, 'click', function() {
-                    
-                    infowindow.open(map, marker);
-                });
-                
-            } else {
-                console.warn("경고: 유효하지 않은 가게 위치 데이터 (위도 또는 경도 없음):", locationData);
-                alert("경고: 유효하지 않은 가게 위치 데이터 (위도 또는 경도 없음):" + JSON.stringify(locationData)); // 디버깅용 alert
-            }
-        });
-
-        if (markers.length > 0) {
-    
-        }
-    } else {
-        console.warn("경고: locations가 유효한 배열이 아니거나 비어있습니다.", locations);
-        
-    }
-}
-
-// 🚩 단일 마커를 추가하는 함수 (MapHomeScreen.tsx의 'addSingleMarker'와 매칭)
-function addSingleMarker(locationData) {
-  
-    removeAllMarkers(); // 새로운 마커를 그리기 전에 기존 마커 제거
-
-    if (locationData.lat !== null && locationData.lat !== undefined && locationData.lng !== null && locationData.lng !== undefined) {
-        var markerPosition = new kakao.maps.LatLng(locationData.lat, locationData.lng);
-
-        var marker = new kakao.maps.Marker({
-            map: map, // 전역 'map' 객체 사용
-            position: markerPosition,
-            // 여기에 마커 이미지 설정 등 추가 가능
-        });
-
-        markers.push(marker);
-
-        // 마커 정보창 (InfoWindow)
-        var storeName = locationData.name || '이름 없음';
-        var infowindowContent = '<div style="padding:5px;font-size:12px;">' + storeName + '</div>';
-
-        var infowindow = new kakao.maps.InfoWindow({
-            content: infowindowContent
-        });
-
-        // 마커 클릭 시 정보창 열기 이벤트 리스너
-        kakao.maps.event.addListener(marker, 'click', function() {
-            
-            infowindow.open(map, marker);
-        });
-        
-    } else {
-        console.warn("경고: 유효하지 않은 단일 가게 위치 데이터 (위도 또는 경도 없음):", locationData);
-        
-    }
-}
-
-
-if (window.ReactNativeWebView) {
-  document.addEventListener('message', function(event) {
-    try {
-      const message = JSON.parse(event.data);
-      alert("웹뷰에서 메시지 수신:"+message.type+message);
-
-      switch (message.type) {
-        case 'moveCenter':
-          var moveLatLon = new kakao.maps.LatLng(message.lat, message.lng);
-          var zoomLevel = message.zoomLevel !== undefined ? message.zoomLevel : map.getLevel();
-          map.setCenter(moveLatLon);
-          map.setLevel(zoomLevel);
-          break;
-
-        case 'clearMarkers':
-          removeAllMarkers();
-          break;
-
-        case 'addMultipleMarkers':
-          addMultipleMarkers(message.locations);
-          break;
-
-        case 'addSingleMarker':
-          addSingleMarker(message);
-          break;
-
-        case 'SET_MAP_MODE':
-          window.currentMapMode = message.mode;
-          alert('📍 주차장 모드 진입');
-          alert('Map mode set to: ' + window.currentMapMode);
-
-          if (message.mode === 'parking') {
-            if (!map) {
-              alert(" map 객체가 아직 생성되지 않았습니다.");
-              return;
-            }
-
-            hideMarketElements();
-            const bounds = map.getBounds();
-            const sw = bounds.getSouthWest();
-            const ne = bounds.getNorthEast();
-
-            window.ReactNativeWebView.postMessage(JSON.stringify({
-              type: 'requestParkingData',
-              payload: {
-                swLat: sw.getLat(),
-                swLng: sw.getLng(),
-                neLat: ne.getLat(),
-                neLng: ne.getLng()
-              }
-            }));
-          } else {
-            showMarketElements();
-          }
-          break;
-
-        case 'setParkingMarkers':
-          if (window.currentMapMode === 'parking') {
-
-          alert(' setParkingMarkers 수신');
-
-            removeAllParkingMarkers();
-            currentParkingPlaces = message.payload;
-            message.payload.forEach(function (p) {
-           addParkingPlaceMarker(p); // 이 함수가 정의돼 있어야 함
-           });
-    alert(' setParkingMarkers 수신'); // 디버깅용
-          
-          }
-          break;
-
-        case 'MOVE_TO_PARKING_PLACE':
-          if (window.currentMapMode === 'parking' && message.lat && message.lng) {
-            const latLng = new kakao.maps.LatLng(message.lat, message.lng);
-            map.panTo(latLng);
-
-            const targetPlace = currentParkingPlaces.find(p =>
-              parseFloat(p.LAT) === message.lat && parseFloat(p.LNG) === message.lng);
-
-            if (targetPlace) {
-              for (let i = 0; i < parkingDataMarkers.length; i++) {
-                const marker = parkingDataMarkers[i];
-                const pos = marker.getPosition();
-                if (pos.getLat() === message.lat && pos.getLng() === message.lng) {
-                  const content = '<div class="parking-infowindow">' +
-                    targetPlace.PARKING_NAME + '<br>' + targetPlace.ADDR + '</div>';
-                  parkingInfoWindow.setContent(content);
-                  parkingInfoWindow.open(map, marker);
-                  break;
-                }
-              }
-            }
-          }
-          break;
-
-        default:
-          console.warn('알 수 없는 메시지 타입:', message.type);
-          break;
-      }
-
-    } catch (e) {
-      console.error("웹뷰 메시지 처리 중 오류 발생:", e, event.data);
-      alert("웹뷰 메시지 처리 오류: " + e.message + ", 원본 데이터: " + event.data);
-    }
-  });
-} else {
-  console.warn("window.ReactNativeWebView가 정의되지 않았습니다.");
-  alert("경고: window.ReactNativeWebView가 정의되지 않았습니다.");
-}
-
-
-        // ===============================================
-        // parkingHTML.ts 기능에 필요한 추가 전역 변수 및 함수 (기존 코드 아래에 추가)
-        // ===============================================
-
-        // 웹뷰의 현재 지도 모드를 추적하는 변수
-        // 'market' (기본값): 시장 폴리곤 및 상점 마커 표시
-        // 'parking': 주차장 마커 표시
-        window.currentMapMode = 'market'; 
-
-        // 주차장 관련 전역 변수 (기존 'markers', 'infowindow'와는 별개)
-        var parkingDataMarkers = []; 
-        var parkingInfoWindow = new kakao.maps.InfoWindow({zIndex:1}); 
-        var currentParkingPlaces = []; 
-
-        // 시장 관련 요소들을 숨기는 함수
-        function hideMarketElements() {
-            allMainPolygons.forEach(polygon => polygon.setMap(null)); // 모든 메인 폴리곤 숨기기
-            allIndoorPolygons.forEach(({ polygons }) => polygons.forEach(p => p.setMap(null))); // 모든 실내 폴리곤 숨기기
-            removeAllMarkers(); // 기존 상점 마커 제거 (기존 removeAllMarkers 함수 재사용)
-            infowindow.close(); // 기존 상점 인포윈도우 닫기
-            // 사용자님의 기존 코드에는 customOverlay 변수가 없으므로, 이 부분을 건드리지 않습니다.
-            // mainPolygons, allIndoorPolygons 변수는 이미 정의되어 있으므로 그대로 사용합니다.
-        }
-
-        // 주차장 관련 요소들을 숨기고 시장 관련 요소들을 다시 표시할 준비를 하는 함수
-        function showMarketElements() {
-            removeAllParkingMarkers(); // 모든 주차장 마커 제거
-            parkingInfoWindow.close(); // 주차장 인포윈도우 닫기
-        
-        }
-
-        // 주차장 마커 생성 및 정보 창 표시 함수
-        function addParkingPlaceMarker(place) {
-            const imageSrc = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_number_orange.png';
-            const imageSize = new kakao.maps.Size(36, 37); 
-            const imgOptions = {
-                 spriteSize: new kakao.maps.Size(36, 37), 
-                 spriteOrigin: new kakao.maps.Point(0, 0), 
-                 offset: new kakao.maps.Point(12, 35) 
-            };
-            const markerImage = new kakao.maps.MarkerImage(imageSrc, imageSize, imgOptions);
-
-            const marker = new kakao.maps.Marker({
-                position: new kakao.maps.LatLng(parseFloat(place.LAT), parseFloat(place.LNG)), 
-                image: markerImage,
-                map: map // 기존 map 객체 사용
-            });
-            parkingDataMarkers.push(marker);
-
-            kakao.maps.event.addListener(marker, 'click', function() {
-                const content = '<div class="parking-infowindow">' + place.PARKING_NAME + '<br>' + place.ADDR + '</div>';
-                parkingInfoWindow.setContent(content);
-                parkingInfoWindow.open(map, marker);
-                
-                if (window.ReactNativeWebView) {
-                    window.ReactNativeWebView.postMessage(JSON.stringify({
-                        type: 'parkingMarkerClick',
-                        parkingName: place.PARKING_NAME,
-                        lat: parseFloat(place.LAT),
-                        lng: parseFloat(place.LNG)
-                    }));
-                }
-            });
-        }
-
-        // 모든 주차장 마커 제거 함수
-        function removeAllParkingMarkers() {
-            for (let i = 0; i < parkingDataMarkers.length; i++) {
-                parkingDataMarkers[i].setMap(null);
-            }
-            parkingDataMarkers = [];
-            parkingInfoWindow.close(); 
-        }
-
-        // 지도 이동 또는 확대/축소 시 주차장 데이터 요청 (idle 이벤트)
-        // 이 리스너는 map 객체가 생성된 후에 한 번만 추가됩니다.
-        kakao.maps.event.addListener(map, 'idle', function() {
-            if (window.ReactNativeWebView && window.currentMapMode === 'parking') {
-                const bounds = map.getBounds();
-                const sw = bounds.getSouthWest();
-                const ne = bounds.getNorthEast();
-
-                window.ReactNativeWebView.postMessage(JSON.stringify({
-                    type: 'requestParkingData',
-                    payload: {
-                        swLat: sw.getLat(),
-                        swLng: sw.getLng(),
-                        neLat: ne.getLat(),
-                        neLng: ne.getLng()
-                    }
-                }));
-            }
-        });
-
-        
-  </script>
+    </script>
   </body>
 </html>
-`;
-export default htmlContent;

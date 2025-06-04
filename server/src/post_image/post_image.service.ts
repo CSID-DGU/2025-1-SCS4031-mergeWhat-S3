@@ -14,14 +14,14 @@ export class PostImageService {
   async findByPostId(postId: number): Promise<PostImage[]> {
     return this.postImageRepository.find({
       where: { post: { id: postId } }, // post_id ❌ → post.id ✅
-      select: ['id', 'postImageUrl', 'post_id'],
+      select: ['id', 'postImage_url', 'post_id'],
     });
   }
 
   async create(post: Post, imageUrl: string): Promise<PostImage> {
     const newImage = this.postImageRepository.create({
       post, // 관계 객체
-      postImageUrl: imageUrl, // 필드 이름 정확히 일치
+      postImage_url: imageUrl, // 필드 이름 정확히 일치
     });
     return this.postImageRepository.save(newImage);
   }

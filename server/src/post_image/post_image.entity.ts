@@ -13,7 +13,7 @@ export class PostImage {
   id: number;
 
   @Column({ name: 'postImage_url', type: 'varchar', length: 255, select: true })
-  postImageUrl: string;
+  postImage_url: string;
 
   @Column()
   post_id: number;

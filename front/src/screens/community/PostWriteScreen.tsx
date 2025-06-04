@@ -15,9 +15,10 @@ import {useNavigation, useRoute} from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {createPost, uploadPostImage} from '../../api/post';
 
-const categoryOptions = ['농수산물', '먹거리', '옷', '기타 품목'];
+const categoryOptions = ['시장로드맵', '농수산물', '먹거리', '옷', '기타 품목'];
 
 const categoryMap: {[key: string]: string} = {
+  시장로드맵: 'course',
   자유게시판: 'free',
   농수산물: 'produce',
   먹거리: 'food',
@@ -283,7 +284,7 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   label: {
-    marginBottom: 4,
+    marginBottom: 10,
     color: '#666',
     fontWeight: 'bold',
   },
@@ -304,6 +305,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     marginBottom: 16,
     gap: 8,
+    marginTop: 7,
   },
   categoryOption: {
     borderWidth: 1,

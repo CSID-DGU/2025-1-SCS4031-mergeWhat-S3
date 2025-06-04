@@ -1001,7 +1001,7 @@ if (window.ReactNativeWebView) {
 
           if (message.mode === 'parking') {
             if (!map) {
-              alert(" map 객체가 아직 생성되지 않았습니다.");
+              alert("🛑 map 객체가 아직 생성되지 않았습니다.");
               return;
             }
 
@@ -1027,14 +1027,14 @@ if (window.ReactNativeWebView) {
         case 'setParkingMarkers':
           if (window.currentMapMode === 'parking') {
 
-          alert(' setParkingMarkers 수신');
+          alert('✅ setParkingMarkers 수신');
 
             removeAllParkingMarkers();
             currentParkingPlaces = message.payload;
             message.payload.forEach(function (p) {
            addParkingPlaceMarker(p); // 이 함수가 정의돼 있어야 함
            });
-    alert(' setParkingMarkers 수신'); // 디버깅용
+    alert('✅ setParkingMarkers 수신'); // 디버깅용
           
           }
           break;
@@ -1107,7 +1107,10 @@ if (window.ReactNativeWebView) {
         function showMarketElements() {
             removeAllParkingMarkers(); // 모든 주차장 마커 제거
             parkingInfoWindow.close(); // 주차장 인포윈도우 닫기
-        
+            
+            // 시장 폴리곤과 상점 마커는 이 함수에서 직접 다시 그리지 않습니다.
+            // React Native 앱에서 'market' 모드로 전환 시, 'DRAW_POLYGON'과 'SET_MARKERS' 메시지를
+            // 다시 웹뷰로 보내주어야 시장/상점 정보가 재표시됩니다.
         }
 
         // 주차장 마커 생성 및 정보 창 표시 함수
@@ -1173,6 +1176,14 @@ if (window.ReactNativeWebView) {
             }
         });
 
+        // 웹뷰 로드 시 초기 메시지 전송 (기존 onload와 분리하여 중복 방지)
+        // 이 부분은 기존 document.addEventListener('message', ...) 안에서 처리될 수 있으므로, 
+        // 앱에서 "WEBVIEW_LOADED" 메시지를 보낼 때 초기 셋업이 완료된 것으로 간주합니다.
+
+        // 기존 코드의 document.addEventListener('message', ...) 에 switch case 문으로 'SET_MAP_MODE' 등을 추가했으므로, 
+        // 여기서 다시 document.addEventListener를 할 필요는 없습니다.
+        // 다만, 기존에 document.addEventListener가 두 번 있는 구조였으므로, 이 부분을 통합했습니다.
+        // (가장 하단의 if (window.ReactNativeWebView) { ... } 블록에 모두 포함시켰습니다.)
         
   </script>
   </body>

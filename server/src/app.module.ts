@@ -8,6 +8,7 @@ import { MarketModule } from './market/market.module';
 import { StoreModule } from './store/store.module';
 import { StoreReviewModule } from './store_review/store_review.module';
 import { PostModule } from './post/post.module';
+import { StoreKeywordModule } from './store_keyword/store_keyword.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { PostModule } from './post/post.module';
     StoreModule,
     StoreReviewModule,
     PostModule,
+    StoreKeywordModule,
   ],
   providers: [ConfigService],
 })

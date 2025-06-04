@@ -7,6 +7,7 @@ const authNavigations = {
 
 const MapNavigations = {
   MAP_HOME: 'MapHome',
+  SEARCH_SCREEN: 'Search',
 } as const;
 
 export {authNavigations, MapNavigations}; // 내보내기. -> 그럼 AuthStack 파일에서 import로 사용가능

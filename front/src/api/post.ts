@@ -1,74 +1,22 @@
 import axios from 'axios';
 import axiosInstance from './axios';
 import {Platform} from 'react-native';
-
-export interface StoreReview {
-  id: number;
-  user_id: number;
-  store_id: number;
-  rating: number;
-  comment: string;
-  image?: string | null;
-  created_at: string;
-  nickname: string; // JOIN된 member.nickname
-}
-
-//  특정 가게(store_id)의 리뷰 리스트 조회
-export const fetchReviewsByStoreId = async (
-  store_id: number,
-): Promise<StoreReview[]> => {
-  const res = await axiosInstance.get(`/reviews/store/${store_id}`);
-  return res.data;
-};
-
-// 리뷰 작성 -> 백엔드로 전송
-export const submitReview = async (
-  storeId: number,
-  rating: number,
-  comment: string,
-  imageUri?: string,
-) => {
-  const formData = new FormData();
-
-  console.log('🚀 formData to send:', formData);
-
-  formData.append('store_id', storeId.toString());
-  formData.append('rating', rating.toString());
-  formData.append('comment', comment);
-  if (imageUri) {
-    formData.append('image', {
-      uri: imageUri,
-      name: 'review.jpg',
-      type: 'image/jpeg',
-    } as any);
-  }
-
-  const res = await axiosInstance.post('/reviews', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
-  return res.data;
-};
-
-export interface Post {
-  id: number;
-  user_id: number;
-  title: string;
-  content: string;
-  board_type: 'course' | 'produce' | 'food' | 'fashion';
-  created_at: string;
-}
+import {Post} from '../types/common';
 
 // 커뮤니티 게시판 데이터 가져오기
 export const fetchPostsByCategory = async (
   category: string,
 ): Promise<Post[]> => {
-  const response = await axiosInstance.get('/posts/by-category', {
-    params: {category},
-  });
-  //console.log('응답 받은 게시물:', response.data);
-  return response.data;
+  try {
+    const response = await axiosInstance.get('/posts/by-category', {
+      params: {category},
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error('게시물 목록 불러오기 실패:', error);
+    throw error;
+  }
 };
 
 const categoryMap: {[key: string]: string} = {
@@ -90,7 +38,7 @@ export const createPost = async (
     content,
     board_type: categoryMap[category],
   });
-  return response.data.id; // 새로 생성된 게시글 ID 반환
+  return response.data.id;
 };
 
 // 게시물에서 이미지 등록 (post_id에 연결)
@@ -112,4 +60,55 @@ export const uploadPostImage = async (
       'Content-Type': 'multipart/form-data',
     },
   });
+};
+
+export interface Comment {
+  id: number;
+  post_id: number;
+  user_id: number;
+  content: string;
+  user?: {
+    id: number;
+    nickname: string;
+    profile_url?: string;
+  };
+  created_at: string;
+}
+
+// 댓글 가져오기 (게시글 ID 기준)
+export const fetchCommentsByPostId = async (
+  postId: number,
+): Promise<Comment[]> => {
+  try {
+    console.log(`Fetching comments for post ID: ${postId}`);
+    const response = await axiosInstance.get<Comment[]>(
+      `/comments/post/${postId}`,
+    );
+    return response.data;
+  } catch (error) {
+    console.error(`게시글 ID ${postId}의 댓글 목록 불러오기 실패:`, error);
+    throw error;
+  }
+};
+
+// 댓글 작성 요청
+export const createComment = async (
+  postId: number,
+  userId: number,
+  content: string,
+): Promise<Comment> => {
+  try {
+    console.log(
+      `Creating comment for post ID ${postId} by user ID ${userId} with content: ${content}`,
+    );
+    const response = await axiosInstance.post<Comment>('/comments', {
+      post_id: postId,
+      user_id: userId,
+      content: content,
+    });
+    return response.data;
+  } catch (error) {
+    console.error('댓글 생성 실패:', error);
+    throw error;
+  }
 };
