@@ -972,7 +972,6 @@ if (window.ReactNativeWebView) {
   document.addEventListener('message', function(event) {
     try {
       const message = JSON.parse(event.data);
-      alert("웹뷰에서 메시지 수신:"+message.type+message);
 
       switch (message.type) {
         case 'moveCenter':
