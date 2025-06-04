@@ -5,6 +5,7 @@ import com.s3.mergewhat.post.domain.aggregate.BoardType;
 import com.s3.mergewhat.post.domain.aggregate.Post;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import com.s3.mergewhat.post.domain.aggregate.PostImage;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -44,7 +45,7 @@ public class ResponsePostAndImageVO {
         this.createdAt = post.getCreatedAt();
         this.boardType = post.getBoardType();
         this.imageUrls = post.getPostImages().stream()
-                .map(img -> img.getPostImageUrl())
+                .map(PostImage::getPostImageUrl) // 메서드 레퍼런스 사용
                 .collect(Collectors.toList());
     }
 

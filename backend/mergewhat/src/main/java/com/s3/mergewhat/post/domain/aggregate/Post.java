@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -40,7 +41,7 @@ public class Post {
     private BoardType boardType;
 
     @OneToMany(mappedBy = "post")
-    private List<PostImage> postImages;
+    private List<PostImage> postImages = new ArrayList<>();
 
     public void update(String title, String content) {
         if (title != null && !title.equals(this.title)) {
