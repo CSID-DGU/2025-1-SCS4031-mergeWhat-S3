@@ -71,6 +71,8 @@ export default function IndexScreen() {
   }, []);
 
   useEffect(() => {
+    let subscriber: Location.LocationSubscription;
+
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
@@ -78,13 +80,27 @@ export default function IndexScreen() {
         return;
       }
 
-      const loc = await Location.getCurrentPositionAsync({});
-      setUserLocation({
-        lat: loc.coords.latitude,
-        lng: loc.coords.longitude,
-      });
+      subscriber = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.High,
+          timeInterval: 5000, // 5초마다
+          distanceInterval: 10, // 10m 이동 시
+        },
+        loc => {
+          setUserLocation({
+            lat: loc.coords.latitude,
+            lng: loc.coords.longitude,
+          });
+        }
+      );
     })();
+
+    return () => {
+      // 언마운트 시 구독 해제
+      if (subscriber) subscriber.remove();
+    };
   }, []);
+
 
   useEffect(() => {
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
