@@ -44,6 +44,7 @@ public enum ErrorCode {
     NOT_FOUND_STORE(40404, HttpStatus.NOT_FOUND, "가게가 존재하지 않습니다."),
     NOT_FOUND_POST(40405, HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."),
     NOT_FOUND_REVIEW(40406, HttpStatus.NOT_FOUND, "리뷰를 찾을 수 없습니다."),
+    NOT_FOUND_COMMENT(40407, HttpStatus.NOT_FOUND, "댓글을 찾을 수 없습니다."),
 
     // 429: 요청 과다 (Too Many Requests)
     TOO_MANY_REQUESTS(42900, HttpStatus.TOO_MANY_REQUESTS, "요청 횟수가 너무 많습니다. 잠시 후 다시 시도해 주세요."),

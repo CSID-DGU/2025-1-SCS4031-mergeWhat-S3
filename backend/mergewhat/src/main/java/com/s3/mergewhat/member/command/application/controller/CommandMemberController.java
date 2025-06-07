@@ -29,6 +29,8 @@ public class CommandMemberController {
         return ResponseDTO.ok(new ResponseSocialLoginMemberVO(jwt));
     }
 
+
+    // 추후 고도화 시 서비스 자체 회원도 개발할 예정
 //    // 일반 회원가입
 //    @PostMapping("signup/user")
 //    public ResponseDTO<?> signupUser(@RequestBody RequestSignupMemberVO requestSignupMemberVO) {

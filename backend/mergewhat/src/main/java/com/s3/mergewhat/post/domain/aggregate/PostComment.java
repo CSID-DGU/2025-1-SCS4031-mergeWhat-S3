@@ -8,47 +8,42 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
-@Table(name = "post")
-@Getter
+@Table(name = "post_comment")
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
 @Builder
-public class Post {
+public class PostComment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "post_id", nullable = false)
+    private Post post;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private Member member;
-
-    @Column(nullable = false)
-    private String title;
 
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
-    @Column(name = "created_at", nullable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "board_type", nullable = false)
-    private BoardType boardType;
-
-    @OneToMany(mappedBy = "post")
-    private List<PostImage> postImages = new ArrayList<>();
-
-    public void update(String title, String content) {
-        if (title != null && !title.equals(this.title)) {
-            this.title = title;
-        }
-        if (content != null && !content.equals(this.content)) {
+    public void updateComment(String content) {
+        if (content != null && !content.isBlank()) {
             this.content = content;
         }
     }
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+    }
+
 }
