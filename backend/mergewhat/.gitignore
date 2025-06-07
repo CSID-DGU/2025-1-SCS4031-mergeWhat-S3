@@ -30,3 +30,8 @@ bin/
 /.nb-gradle/
 
 .env*
+
+# .gitignore
+src/main/resources/application.yml
+
+

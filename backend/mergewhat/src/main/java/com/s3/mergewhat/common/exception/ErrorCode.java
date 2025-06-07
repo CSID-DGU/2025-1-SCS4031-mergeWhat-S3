@@ -5,7 +5,6 @@ import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
 @Getter
-@AllArgsConstructor
 public enum ErrorCode {
 
     // 400: 잘못된 요청 (Bad Request)
@@ -30,7 +29,7 @@ public enum ErrorCode {
     LOGIN_FAILURE(40108, HttpStatus.UNAUTHORIZED, "로그인에 실패했습니다"), // 로그인 실패
     UNAUTHORIZED_ACCESS(40109, HttpStatus.UNAUTHORIZED, "인증되지 않은 접근입니다."), // 인증되지 않은 사용자 접근
     EXPIRED_SESSION(40110, HttpStatus.UNAUTHORIZED, "세션이 만료되었습니다."), // 사용자 세션이 만료된 경우
-    EXIST_USER(401121, HttpStatus.UNAUTHORIZED, "이미 회원가입한 회원입니다."), // 이미 회원가입된 사용자
+    EXIST_USER(40111, HttpStatus.UNAUTHORIZED, "이미 회원가입한 회원입니다."), // 이미 회원가입된 사용자
     NOT_FOUND_USER_ID(40112, HttpStatus.UNAUTHORIZED, "아이디를 잘못 입력하셨습니다."), // 잘못된 아이디 입력
     INVALID_PASSWORD(40113, HttpStatus.UNAUTHORIZED, "비밀번호를 잘못 입력하셨습니다."), // 비밀번호가 잘못된 경우
 
@@ -40,6 +39,11 @@ public enum ErrorCode {
 
     // 404: 리소스를 찾을 수 없음 (Not Found)
     NOT_FOUND_MEMBER(40401, HttpStatus.NOT_FOUND, "회원이 존재하지 않습니다."),
+    NOT_FOUND_MARKET(40402, HttpStatus.NOT_FOUND, "시장이 존재하지 않습니다."),
+    NOT_FOUND_CATEGORY(40403, HttpStatus.NOT_FOUND, "카테고리가 존재하지 않습니다."),
+    NOT_FOUND_STORE(40404, HttpStatus.NOT_FOUND, "가게가 존재하지 않습니다."),
+    NOT_FOUND_POST(40405, HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."),
+    NOT_FOUND_REVIEW(40406, HttpStatus.NOT_FOUND, "리뷰를 찾을 수 없습니다."),
 
     // 429: 요청 과다 (Too Many Requests)
     TOO_MANY_REQUESTS(42900, HttpStatus.TOO_MANY_REQUESTS, "요청 횟수가 너무 많습니다. 잠시 후 다시 시도해 주세요."),
@@ -50,5 +54,12 @@ public enum ErrorCode {
     private final Integer code;
     private final HttpStatus httpStatus;
     private final String message;
+
+    ErrorCode(int code, HttpStatus httpStatus, String message) {
+        this.code = code;
+        this.httpStatus = httpStatus;
+        this.message = message;
+    }
+
 
 }

@@ -1,17 +1,19 @@
 package com.s3.mergewhat.common;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.s3.mergewhat.common.exception.CommonException;
 import com.s3.mergewhat.common.exception.ErrorCode;
 import com.s3.mergewhat.common.exception.ExceptionDTO;
-import io.micrometer.common.lang.Nullable;
+import jakarta.validation.constraints.NotNull;
+import org.springframework.lang.Nullable;
 import lombok.Data;
-import org.antlr.v4.runtime.misc.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @Data
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ResponseDTO<T> {
 
     @JsonIgnore
