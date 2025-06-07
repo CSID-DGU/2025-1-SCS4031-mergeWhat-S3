@@ -39,7 +39,6 @@ const mockLikes = [
 
 const LikeItem = ({ item }: { item: typeof mockLikes[0] }) => (
     <View style={styles.card}>
-        <Image source={{ uri: item.image }} style={styles.thumbnail} />
         <View style={styles.textContainer}>
             <Text style={styles.postTitle} numberOfLines={1}>{item.postTitle}</Text>
             <Text style={styles.snippet} numberOfLines={2}>{item.snippet}</Text>

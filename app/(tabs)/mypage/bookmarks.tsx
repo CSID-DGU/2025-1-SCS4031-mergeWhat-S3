@@ -20,9 +20,10 @@ const mockBookmarks = [
     },
 ];
 
+export const bookmarkCount = mockBookmarks.length;
+
 const BookmarkItem = ({ item }: { item: typeof mockBookmarks[0] }) => (
     <View style={styles.card}>
-        <Image source={{ uri: item.image }} style={styles.thumbnail} />
         <View style={styles.textContainer}>
             <Text style={styles.title}>{item.name}</Text>
             <Text style={styles.content} numberOfLines={2}>{item.description}</Text>
@@ -65,12 +66,6 @@ const styles = StyleSheet.create({
         borderColor: '#ddd',
         borderRadius: 8,
         backgroundColor: '#fff',
-    },
-    thumbnail: {
-        width: 80,
-        height: 80,
-        borderRadius: 6,
-        marginRight: 12,
     },
     textContainer: {
         flex: 1,

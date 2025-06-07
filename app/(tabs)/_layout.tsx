@@ -1,7 +1,7 @@
 //app/(tabs)/_layout.tsx
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { Platform } from 'react-native';
+import { Platform, Image } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 
@@ -38,22 +38,64 @@ export default function TabLayout() {
             <Tabs.Screen
               name="index"
               options={{
-                title: '지도',
-                tabBarIcon: ({ color }) => <Entypo name="map" size={24} color="black" />,
+                title: '시장',
+                tabBarIcon: ({ focused }) => (
+                  <Image
+                    source={
+                      focused
+                        ? require('@/assets/images/click_market_icon.png')
+                        : require('@/assets/images/market_icon.png') // 활성 상태 이미지
+                    }
+                    style={{
+                      width: 24,
+                      height: 24,
+                      resizeMode: 'contain',
+                      marginBottom: -2,  // 텍스트와 간격 조절
+                    }}
+                  />
+                ),
               }}
             />
             <Tabs.Screen
               name="comm"
               options={{
                 title: '커뮤니티',
-                tabBarIcon: ({ color }) => <Entypo name="chat" size={24} color="black" />,
+                tabBarIcon: ({ focused }) => (
+                  <Image
+                    source={
+                      focused
+                        ? require('@/assets/images/click_community_icon.png')
+                        : require('@/assets/images/community_icon.png')  // 활성 상태 이미지
+                    }
+                    style={{
+                      width: 24,
+                      height: 24,
+                      resizeMode: 'contain',
+                      marginBottom: -2,  // 텍스트와 간격 조절
+                    }}
+                  />
+                ),
               }}
             />
             <Tabs.Screen
               name="mypage"
               options={{
                 title: '마이페이지',
-                tabBarIcon: ({ color }) => <Octicons name="person" size={24} color="black" />,
+                tabBarIcon: ({ focused }) => (
+                  <Image
+                    source={
+                      focused
+                        ? require('@/assets/images/click_mypage_icon.png')
+                        : require('@/assets/images/mypage_icon.png')  // 활성 상태 이미지
+                    }
+                    style={{
+                      width: 24,
+                      height: 24,
+                      resizeMode: 'contain',
+                      marginBottom: -2,  // 텍스트와 간격 조절
+                    }}
+                  />
+                ),
               }}
             />
           </Tabs>

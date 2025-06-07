@@ -8,16 +8,18 @@ import {
   FlatList,
   TouchableOpacity,
   ScrollView,
-  BackHandler
+  BackHandler,
+  TextInput
 } from 'react-native';
 import { configureReanimatedLogger, ReanimatedLogLevel } from 'react-native-reanimated';
 import { WebView } from 'react-native-webview';
-import BottomSheet from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet';
 import SearchBar from '@/components/SearchBar';
 import KakaoMap from '@/components/KakaoMap';
 import * as Location from 'expo-location';
 import { Menu, Button, Provider as PaperProvider } from 'react-native-paper';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialIcons, Ionicons } from '@expo/vector-icons';
+
 
 configureReanimatedLogger({ level: ReanimatedLogLevel.warn, strict: false });
 
@@ -47,20 +49,20 @@ export default function IndexScreen() {
   const webviewRef = useRef<WebView>(null);
   const bottomSheetRef = useRef<BottomSheet>(null);
   const flatListRef = useRef<FlatList<{ name: string; distance?: number }>>(null);
+  const inputRef = useRef<TextInput>(null);
   const snapPoints = useMemo(() => ['3%', '30%', '35%', '40%', '60%', '85%'], []);
 
   const categories = [
-    { icon: '🥬', label: '채소' },
-    { icon: '🥩', label: '고기' },
-    { icon: '🐟', label: '생선' },
-    { icon: '🍽️', label: '먹거리' },
-    { icon: '👟', label: '신발' },
+    { icon: '🥬', label: '농수산물' },
+    { icon: '🍡', label: '먹거리' },
+    { icon: '👕', label: '옷' },
+    { icon: '🎎', label: '혼수' },
   ];
 
   const infos = [
     { icon: '🚗', label: '주차장' },
     { icon: '🚻', label: '화장실' },
-    { icon: '🏛️', label: '관광지' },
+    { icon: '🎡', label: '근처 놀거리' },
   ];
 
   useEffect(() => {
@@ -160,6 +162,7 @@ export default function IndexScreen() {
     }
   };
 
+
   function getDistance(lat1: number, lng1: number, lat2: number, lng2: number) {
     const R = 6371e3; // m
     const toRad = (d: number) => (d * Math.PI) / 180;
@@ -244,17 +247,15 @@ export default function IndexScreen() {
 
         {/* 검색창 */}
         <View style={styles.searchBarContainer}>
-          <SearchBar
+          <TextInput
+            placeholder="시장명, 상점을 검색하세요"
+            placeholderTextColor="#888"
             value={inputText}
             onChangeText={setInputText}
-            onSearch={() => {
-              setSearchKeyword(inputText);
-              setSearchCount(c => c + 1);
-              setPlaceList([]);
-              setSelectIndex(undefined);
-            }}
+            style={styles.searchInput}
           />
         </View>
+
 
         {/* BottomSheet + FlatList */}
         <BottomSheet
@@ -263,6 +264,14 @@ export default function IndexScreen() {
           index={1}
           enableContentPanningGesture={false}
           style={styles.sheetContainer}
+          backdropComponent={props => (
+            <BottomSheetBackdrop
+              {...props}
+              appearsOnIndex={4}   // 언제 나타날지 (snap index 기준)
+              disappearsOnIndex={3} // 언제 사라질지
+              opacity={0.5}        // 어두워지는 정도
+            />
+          )}
         >
           {mode === 'search' && (
             <View style={styles.topBar}>
@@ -278,6 +287,12 @@ export default function IndexScreen() {
                   </TouchableOpacity>
                 ))}
               </ScrollView>
+
+              <View style={{ flexDirection: 'row', marginTop: 4, paddingHorizontal: 16 }}>
+                <TouchableOpacity style={styles.chip}>
+                  <Text style={styles.chipText}>💳 가맹점</Text>
+                </TouchableOpacity>
+              </View>
 
               <Text style={styles.sectionTitle}>주변 정보</Text>
               <ScrollView
@@ -447,9 +462,37 @@ export default function IndexScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, },
   mapContainer: { flex: 1 },
-  searchBarContainer: { position: 'absolute', top: 40, left: 20, right: 20, zIndex: 10 },
+  searchBarContainer: {
+    position: 'absolute',
+    top: 50,
+    left: 16,
+    right: 16,
+    zIndex: 99,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    paddingHorizontal: 20,
+    height: 52,
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+
+  searchInput: {
+    fontSize: 16,
+    color: '#222',
+  },
+
+  dismissButton: {
+    position: 'absolute',
+    right: 20,
+    padding: 5,
+    marginTop: -9.5,
+  },
   sheetContainer: { flex: 1, backgroundColor: 'white' },
   listContent: { paddingHorizontal: 16, paddingVertical: 8 },
   itemContainer: { backgroundColor: '#fff', borderRadius: 8, padding: 12, marginBottom: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 2, alignSelf: 'center', width: '92%', },
@@ -459,11 +502,38 @@ const styles = StyleSheet.create({
   footerContainer: { alignItems: 'center', paddingVertical: 8 },
   footerButton: { backgroundColor: '#eee', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8 },
   footerText: { fontSize: 14, color: '#444' },
-  topBar: { paddingHorizontal: 16, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: '#eee' },
-  sectionTitle: { fontSize: 14, fontWeight: '600', marginTop: 8, marginBottom: 4 },
-  chipScroll: { flexDirection: 'row', alignItems: 'center' },
-  chip: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#ddd', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6, marginRight: 8, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 1 },
-  chipText: { fontSize: 12, color: '#333' },
+  topBar: { paddingHorizontal: 16, paddingBottom: 8, },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    marginTop: 10,
+    color: '#222',
+    paddingHorizontal: 16,
+  },
+
+  chipScroll: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 },
+  chip: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginRight: 8,
+    marginBottom: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  chipText: {
+    fontSize: 13,
+    color: '#333',
+  },
   itemSelected: { backgroundColor: '#e0f0ff', },
   filterButton: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, marginTop: 8, marginBottom: 8, },
   cardContainer: {

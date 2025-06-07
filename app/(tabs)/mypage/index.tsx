@@ -14,11 +14,14 @@ import {
 import { useRouter } from 'expo-router';
 import { useAuthContext } from '../../../hooks/useAuthContext';
 import LoginScreen from '../../login';
+import { postCount } from './posts';
+import { reviewCount } from './reviews';
+import { bookmarkCount } from './bookmarks';
 
 const stats = [
-    { label: '게시글', count: 46, screen: '/mypage/posts' },
-    { label: '리뷰', count: 21, screen: '/mypage/reviews' },
-    { label: '찜한 가게', count: 33, screen: '/mypage/bookmarks' },
+    { label: '게시글', count: postCount, screen: '/mypage/posts' },
+    { label: '리뷰', count: reviewCount, screen: '/mypage/reviews' },
+    { label: '찜한 가게', count: bookmarkCount, screen: '/mypage/bookmarks' },
 ] as const;
 
 const communityItems = [
@@ -27,6 +30,8 @@ const communityItems = [
 ] as const;
 
 const otherItems = ['문의하기', '로그아웃', '회원 탈퇴'] as const;
+
+const footerImage = require('../../../assets/images/logo.png');
 
 export default function MypageIndexScreen() {
     const router = useRouter();
@@ -128,9 +133,10 @@ export default function MypageIndexScreen() {
                         </TouchableOpacity>
                     ))}
                 </View>
-                <View style={styles.logoTitle}>
-                    <Text style={{ fontSize: 20, fontWeight: 'bold', paddingTop: 30, }}>시장하시죠</Text>
+                <View style={styles.footerImageWrapper}>
+                    <Image source={footerImage} style={styles.footerImage} resizeMode="contain" />
                 </View>
+
             </ScrollView>
 
         </SafeAreaView>
@@ -205,5 +211,16 @@ const styles = StyleSheet.create({
         borderBottomColor: '#eee',
     },
     listItemText: { fontSize: 14, color: '#333' },
-    logoTitle: { flex: 1, justifyContent: 'center', alignItems: 'center' }
+    logoTitle: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    footerImageWrapper: {
+        marginTop: 50,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+
+    footerImage: {
+        width: 240,
+        height: 120, // 또는 원본 비율에 맞게 조정
+    },
+
 });

@@ -24,6 +24,8 @@ const mockReviews = [
     },
 ];
 
+export const reviewCount = mockReviews.length;
+
 const ReviewItem = ({ item }: { item: typeof mockReviews[0] }) => (
     <View style={styles.card}>
         <View style={styles.textContainer}>
