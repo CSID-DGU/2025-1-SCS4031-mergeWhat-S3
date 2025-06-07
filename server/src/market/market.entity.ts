@@ -1,3 +1,4 @@
+import { Entertainment } from 'src/entertainment/entertainment.entity';
 import { Store } from 'src/store/store.entity';
 import {
   BaseEntity,
@@ -12,6 +13,7 @@ import {
 
 @Entity('market')
 export class Market extends BaseEntity {
+  [x: string]: any;
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -35,4 +37,9 @@ export class Market extends BaseEntity {
 
   @OneToMany(() => Store, (store) => store.market)
   stores: Store[];
+
+  @OneToMany(() => Entertainment, (entertainment) => entertainment.market, {
+    cascade: true,
+  })
+  entertainments: Entertainment[];
 }

@@ -3,6 +3,7 @@ import { Market } from 'src/market/market.entity';
 import { StoreKeyword } from 'src/store_keyword/store_keyword.entity';
 import { StoreProduct } from 'src/store_product/store_product.entity';
 import { StoreReview } from 'src/store_review/store_review.entity';
+
 import {
   BaseEntity,
   Column,

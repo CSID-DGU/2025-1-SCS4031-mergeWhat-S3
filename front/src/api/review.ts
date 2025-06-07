@@ -8,7 +8,21 @@ export const fetchReviewsByStoreId = async (
   store_id: number,
 ): Promise<StoreReview[]> => {
   const res = await axiosInstance.get(`/reviews/store/${store_id}`);
-  return res.data;
+  const rawData = res.data;
+
+  // 필드 매핑
+  const mappedData: StoreReview[] = rawData.map((item: any) => ({
+    id: Number(item.review_id),
+    user_id: Number(item.user_id ?? 0), // 서버에서 빠져 있다면 0 처리
+    store_id: Number(item.store_id ?? store_id),
+    rating: Number(item.review_rating),
+    comment: item.review_comment ?? '',
+    created_at: item.review_created_at,
+    nickname: item.user_nickname ?? '익명',
+    image: item.review_image ?? null, // 서버가 포함하는 경우만
+  }));
+
+  return mappedData;
 };
 
 // 리뷰 작성 -> 백엔드로 전송

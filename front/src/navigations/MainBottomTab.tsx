@@ -16,15 +16,25 @@ import clickedMypageIcon from '../assets/click_mypage_icon.png';
 
 import {Image, StyleSheet} from 'react-native';
 
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+
 const Tab = createBottomTabNavigator<MainTabParamList>(); // MainTabParamList 적용
 
 function MainBottomTab() {
+  const insets = useSafeAreaInsets();
+
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: true,
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: {
+          height: 60 + insets.bottom, // 안전 영역을 고려한 높이
+          borderTopWidth: 0.3,
+          borderTopColor: '#ccc',
+          backgroundColor: '#fff',
+          paddingBottom: insets.bottom, // ✅ 핵심
+        },
         tabBarLabelStyle: styles.tabBarLabel,
       }}>
       <Tab.Screen

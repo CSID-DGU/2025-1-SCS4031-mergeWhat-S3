@@ -15,13 +15,12 @@ interface Market {
 
 // MapStackParamList 타입 정의 업데이트
 export type MapStackParamList = {
-  // MapHome으로 전달될 수 있는 파라미터 추가:
-  // selectedMarket은 이제 SearchScreen에서 단일 선택 후 바로 전달되지 않고,
-  // searchResultsFromSearchScreen으로 전체 목록이 전달됩니다.
+  // MapHome으로 전달될 수 있는 파라미터
   MapHome:
     | {
         searchResultsFromSearchScreen?: Market[]; // ✅ SearchScreen에서 넘어오는 검색 결과 목록
         initialSelectedMarket?: Market; // ✅ (선택 사항) 만약 MapHome 진입 시 특정 시장을 바로 선택하고 싶다면
+        //selectedMarketFromSearch?: Market;
       }
     | undefined;
   [MapNavigations.SEARCH_SCREEN]: undefined;

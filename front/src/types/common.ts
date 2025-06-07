@@ -134,3 +134,16 @@ type PlaceImage = {
   is_indoor: boolean;
   image_url: string;
 };
+
+export type Comment = {
+  id: number;
+  post_id: number;
+  user_id: number;
+  content: string;
+  user?: {
+    id: number;
+    nickname: string;
+    profile_url?: string;
+  };
+  created_at: string;
+};

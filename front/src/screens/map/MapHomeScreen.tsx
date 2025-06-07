@@ -104,7 +104,7 @@ function MapHomeScreen() {
   const webViewRef = useRef<WebView>(null);
   const [activeIndoor, setActiveIndoor] = useState<boolean>(false);
 
-  const snapPoints = useMemo(() => ['7%', '30%', '45%', '80%'], []);
+  const snapPoints = useMemo(() => ['7%', '30%', '40%', '80%'], []);
   const [weatherData, setWeatherData] = useState<WeatherData[] | null>(null);
 
   const stackNavigation = useNavigation<MapHomeScreenNavigationProp>();
@@ -164,10 +164,10 @@ function MapHomeScreen() {
 
         switch (data.type) {
           case 'requestParkingData':
-            console.log(
+            /*console.log(
               '📡 [onMessage] 웹뷰로부터 주차장 데이터 요청 수신:',
               data.payload,
-            );
+            );*/
             // → 여기서 Kakao API 호출 or 기존 로직으로 parking data 가져오기
             break;
 
@@ -441,11 +441,8 @@ function MapHomeScreen() {
                 lat: latitude,
                 lng: longitude,
                 // 📌 수정: 탭 전환 시 줌 레벨을 3으로 명시하여 메인 폴리곤 뷰로 돌아오도록 설정
-                zoomLevel: 3,
+                zoomLevel: 0,
               }),
-            );
-            console.log(
-              `[MapHomeScreen] Sending moveCenter (tabPress): lat=${latitude}, lng=${longitude}, zoom=3`,
             );
           },
           error => {
@@ -513,9 +510,6 @@ function MapHomeScreen() {
     // 검색 결과가 있다면 기존 마커 모두 지우기
     if (webViewRef.current) {
       webViewRef.current.postMessage(JSON.stringify({type: 'clearMarkers'}));
-      console.log(
-        '[MapHomeScreen] clearMarkers 메시지 전송됨 (handleSearchResults)',
-      );
     }
 
     if (markets.length > 0) {
@@ -614,7 +608,7 @@ function MapHomeScreen() {
           zoomLevel: targetZoomLevel,
         }),
       );
-    }, 100); // 100ms 지연
+    }, 200); // 100ms 지연
 
     setSelectedMarketName(name); // 선택된 시장명 업데이트
     setClickedIndoorName(null); // 실내 폴리곤 이름 초기화 (IndoorInfoSheet에서 사용)
@@ -626,9 +620,6 @@ function MapHomeScreen() {
     // 시장 클릭 시에는 모든 마커 지우고 IndoorInfoSheet에서 가게 데이터 로드 후 마커 그림
     if (webViewRef.current) {
       webViewRef.current.postMessage(JSON.stringify({type: 'clearMarkers'}));
-      console.log(
-        '[MapHomeScreen] clearMarkers 메시지 전송됨 (moveToLocation)',
-      );
     }
   };
 
@@ -692,16 +683,36 @@ function MapHomeScreen() {
           <Text
             style={{
               color: '#888',
-              fontSize: 13,
-              textAlign: 'left',
+              fontSize: 14,
+              marginBottom: 16,
+              marginLeft: 10,
+              marginTop: 3,
             }}>
-            현재 위치에서 {distanceKm}km
+            {distanceKm ? `현재 위치에서 ${distanceKm}km` : '거리 정보 없음'}
           </Text>
         </TouchableOpacity>
       );
     },
     [moveToLocation], // moveToLocation 의존성 추가
   );
+
+  useEffect(() => {
+    if (!currentPosition) {
+      Geolocation.getCurrentPosition(
+        position => {
+          setCurrentPosition({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          });
+          console.log('[📍 위치정보 확보됨 - searchResult용]');
+        },
+        error => {
+          console.warn('[위치 정보 실패]', error.message);
+        },
+        {enableHighAccuracy: true, timeout: 10000, maximumAge: 10000},
+      );
+    }
+  }, []);
 
   // searchResults (검색 결과 목록) 렌더링 함수
   const renderStyledMarketItem = useCallback(
@@ -726,9 +737,6 @@ function MapHomeScreen() {
           item.center_lng,
         );
       }
-
-      // ----------------------------------------------------------------------------------------
-
       return (
         <TouchableOpacity
           style={{marginBottom: 20, padding: 10}}
@@ -742,7 +750,7 @@ function MapHomeScreen() {
               marginTop: -5,
               fontSize: 18,
               fontWeight: 'bold',
-              marginLeft: 10,
+              marginLeft: 4,
             }}>
             {item.name}
           </Text>
@@ -752,7 +760,7 @@ function MapHomeScreen() {
                 color: '#888',
                 fontSize: 14,
                 marginBottom: 16,
-                marginLeft: 10,
+                marginLeft: 1,
                 marginTop: 3,
               }}>
               현재 위치에서 {distanceKm}km
@@ -781,9 +789,6 @@ function MapHomeScreen() {
     if (webViewRef.current) {
       // 모든 기존 마커 지우기 (선택된 가게 마커만 표시하기 위함)
       webViewRef.current.postMessage(JSON.stringify({type: 'clearMarkers'}));
-      console.log(
-        '[MapHomeScreen] clearMarkers 메시지 전송됨 (handleSelectStore)',
-      );
 
       // 선택된 가게의 위치로 지도 이동 및 단일 마커 표시
       webViewRef.current.postMessage(
@@ -806,28 +811,17 @@ function MapHomeScreen() {
           zoomLevel: 1, // 가게 상세 줌 레벨 (확대)
         }),
       );
-      console.log(
-        `[MapHomeScreen] Sending moveCenter (handleSelectStore): lat=${store.center_lat}, lng=${store.center_lng}, zoom=1`,
-      );
     }
   }, []);
 
   // IndoorInfoSheet에서 카테고리 선택 시
   const handleSelectCategory = useCallback(
-    (category: string | null, currentMarketName: string) => {
-      console.log(
-        '[MapHomeScreen] 카테고리 선택:',
-        category,
-        '시장:',
-        currentMarketName,
-      );
-    },
+    (category: string | null, currentMarketName: string) => {},
     [],
   );
 
   // IndoorInfoSheet에서 뒤로가기 버튼 클릭 시 (시장 목록으로 돌아가기)
   const handleBackToMarketList = useCallback(() => {
-    console.log('[MapHomeScreen] 시장 목록으로 돌아가기'); //디버깅용
     setActiveIndoor(false);
     setClickedIndoorName(null);
     setSelectedMarketName(null); // 시장 이름 초기화
@@ -838,13 +832,40 @@ function MapHomeScreen() {
     // 모든 마커 지우는 메시지 전송
     if (webViewRef.current) {
       webViewRef.current.postMessage(JSON.stringify({type: 'clearMarkers'}));
-      console.log(
-        '[MapHomeScreen] clearMarkers 메시지 전송됨 (handleBackToMarketList)', //디버깅용
-      );
     }
     // 필요하다면 fetchNearbyMarkets를 다시 호출하여 현재 위치 기반 시장 목록을 업데이트
     fetchNearbyMarkets();
   }, []);
+
+  useEffect(() => {
+    const params = route.params as any;
+
+    if (webViewLoaded && params?.initialSelectedMarket) {
+      const {center_lat, center_lng, name} = params.initialSelectedMarket;
+
+      console.log(
+        '[📍초기 중심 이동] 선택된 시장:',
+        name,
+        center_lat,
+        center_lng,
+      );
+
+      // WebView로 지도 중심 이동 (zoomLevel 3)
+      webViewRef.current?.postMessage(
+        JSON.stringify({
+          type: 'moveCenter',
+          lat: center_lat,
+          lng: center_lng,
+          zoomLevel: 3,
+        }),
+      );
+
+      // 지도 이동만 하고, 아직 마커/Indoor 상태 전환은 하지 않음
+      stackNavigation.setParams({initialSelectedMarket: undefined}); // 소비
+    }
+  }, [webViewLoaded, route.params]);
+
+  // ----------------------------------------------------------------------------------------
 
   return (
     <GestureHandlerRootView style={{flex: 1}}>
@@ -945,7 +966,7 @@ function MapHomeScreen() {
                     lat: latitude,
                     lng: longitude,
                     // 📌 수정: 현재 위치로 돌아갈 때 줌 레벨을 3으로 명시하여 메인 폴리곤 뷰로 설정
-                    zoomLevel: 3,
+                    zoomLevel: 0,
                   }),
                 );
                 console.log(
@@ -955,9 +976,6 @@ function MapHomeScreen() {
                 if (webViewRef.current) {
                   webViewRef.current.postMessage(
                     JSON.stringify({type: 'clearMarkers'}),
-                  );
-                  console.log(
-                    '[MapHomeScreen] clearMarkers 메시지 전송됨 (currentLocationButton)',
                   );
                 }
               },
@@ -1027,7 +1045,7 @@ function MapHomeScreen() {
                       fontSize: 14,
                       marginLeft: 10, // 기존 텍스트와의 간격
                     }}>
-                    반경 5km 내외
+                    반경 5km
                   </Text>
                 </View>
                 {defaultMarketList.map(item => {

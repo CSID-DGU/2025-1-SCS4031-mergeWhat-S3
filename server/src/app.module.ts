@@ -9,6 +9,7 @@ import { StoreModule } from './store/store.module';
 import { StoreReviewModule } from './store_review/store_review.module';
 import { PostModule } from './post/post.module';
 import { StoreKeywordModule } from './store_keyword/store_keyword.module';
+import { CommentModule } from './comment/comment.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { StoreKeywordModule } from './store_keyword/store_keyword.module';
     StoreReviewModule,
     PostModule,
     StoreKeywordModule,
+    CommentModule,
   ],
   providers: [ConfigService],
 })

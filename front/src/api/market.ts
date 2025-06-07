@@ -10,7 +10,9 @@ export const fetchMarketsByKeyword = async (keyword: string) => {
 
 // 상점 데이터 가져오기  --> IndoorInfoSheet
 export const fetchAllStores = async (marketName: string) => {
-  const response = await axiosInstance.get('/stores/all');
+  const response = await axiosInstance.get('/stores/all', {
+    params: {marketName},
+  });
   return response.data;
 };
 
@@ -41,32 +43,20 @@ export const fetchStoreProducts = async (
   return data;
 };
 
+// 근처 놀거리 이미지만 가져오기
 export const fetchPlaceImage = async (
-  marketId: number, // ⭐ marketId 파라미터 추가
+  marketId: number,
   placeName: string,
   isIndoor: boolean,
-): Promise<PlaceImage | null> => {
+): Promise<{image_url: string} | null> => {
   try {
-    // ⭐ URL 경로에 marketId, placeName, isIndoor를 모두 포함
-    // 예: /entertainment-image/123/종묘/true
+    const encodedName = encodeURIComponent(placeName); // 한글 인코딩
     const response = await axiosInstance.get(
-      `/entertainment-image/${marketId}/${placeName}/${isIndoor.toString()}`,
+      `/entertainment-image/${marketId}/${encodedName}/${isIndoor}`,
     );
-
-    if (response.data) {
-      return response.data;
-    } else {
-      console.warn(
-        `[API] 장소에 대한 이미지를 찾을 수 없습니다: Market ID: ${marketId}, Place: ${placeName}, Indoor: ${isIndoor}`,
-      );
-      return null;
-    }
+    return response.data; // { image_url: "https://..." }
   } catch (error) {
-    console.error(
-      `[API] Market ID: ${marketId}, ${placeName} 이미지 가져오기 실패:`,
-      error,
-    );
-    throw error;
+    return null;
   }
 };
 
@@ -105,13 +95,5 @@ export type StoreProduct = {
 export type StoreImage = {
   id: number;
   store_id: number;
-  image_url: string;
-};
-
-type PlaceImage = {
-  id: number;
-  market_id: number; // ⭐ market_id 추가
-  name: string; // ⭐ place_name이 DB의 name 컬럼에 매핑
-  is_indoor: boolean;
   image_url: string;
 };

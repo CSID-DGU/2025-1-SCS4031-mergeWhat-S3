@@ -15,7 +15,9 @@ import {
 import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {CommunityStackParamList, Post} from '../../types/common';
+import {CommunityStackParamList, Post, Comment} from '../../types/common';
+import {useState, useEffect} from 'react';
+import {fetchCommentsByPostId, createComment} from '../../api/post'; // <-- 기존 코드에 추가
 
 const {width: screenWidth} = Dimensions.get('window');
 
@@ -56,6 +58,33 @@ const PostInfoScreen = () => {
     return `${year}.${month}.${day} ${hours}:${minutes}`;
   };
 
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [commentText, setCommentText] = useState('');
+
+  useEffect(() => {
+    const loadComments = async () => {
+      try {
+        const data = await fetchCommentsByPostId(post.id);
+        setComments(data);
+      } catch (error) {
+        console.error('댓글 불러오기 오류:', error);
+      }
+    };
+    loadComments();
+  }, [post.id]);
+
+  const handleCommentSubmit = async () => {
+    if (!commentText.trim()) return;
+
+    try {
+      const newComment = await createComment(post.id, 3, commentText); // user_id 하드코딩된 상태
+      setComments(prev => [newComment, ...prev]); // 새 댓글 추가
+      setCommentText('');
+    } catch (error) {
+      console.error('댓글 작성 실패:', error);
+    }
+  };
+
   // post가 없으면 로딩 인디케이터 대신 에러 메시지 표시
   if (!post) {
     return (
@@ -69,6 +98,8 @@ const PostInfoScreen = () => {
   // board_typeToTitleMap에 해당 board_type이 없으면 기본값 '알 수 없음'으로 표시
   const boardTitle =
     boardTypeToTitleMap[post.board_type] || '알 수 없는 게시판';
+
+  // -----------------------------------------------------------------
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -92,12 +123,12 @@ const PostInfoScreen = () => {
             source={
               post.user?.profile_url
                 ? {uri: post.user.profile_url}
-                : require('../../assets/시장기본이미지.png')
+                : require('../../assets/채현_프로필.jpg')
             }
             style={styles.profileImage}
           />
           <View>
-            <Text style={styles.nickname}>{post.user?.nickname || '익명'}</Text>
+            <Text style={styles.nickname}>{post.user?.nickname || '채현'}</Text>
             <Text style={styles.timestamp}>{formatDate(post.created_at)}</Text>
           </View>
         </View>
@@ -132,7 +163,36 @@ const PostInfoScreen = () => {
         {/* 댓글 섹션 (향후 구현 예정) */}
         <View style={styles.commentSection}>
           <Text style={styles.commentHeader}>댓글</Text>
-          <Text style={styles.noCommentsText}>아직 댓글이 없습니다.</Text>
+
+          {comments.length === 0 ? (
+            <Text style={styles.noCommentsText}>아직 댓글이 없습니다.</Text>
+          ) : (
+            comments.map(comment => (
+              <View key={comment.id} style={{marginBottom: 12}}>
+                <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                  <Image
+                    source={
+                      comment.user?.profile_url
+                        ? {uri: comment.user.profile_url}
+                        : require('../../assets/원혁_프로필.jpg')
+                    }
+                    style={styles.profileImage}
+                  />
+                  <View>
+                    <Text style={styles.nickname}>
+                      {comment.user?.nickname || '장원혁'}
+                    </Text>
+                    <Text style={styles.timestamp}>
+                      {formatDate(comment.created_at)}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={{marginLeft: 50, color: '#333', marginTop: 4}}>
+                  {comment.content}
+                </Text>
+              </View>
+            ))
+          )}
         </View>
       </ScrollView>
 
@@ -142,8 +202,12 @@ const PostInfoScreen = () => {
           style={styles.commentInput}
           placeholder="댓글 달기"
           placeholderTextColor="#999"
+          value={commentText}
+          onChangeText={setCommentText}
         />
-        <TouchableOpacity style={styles.sendButton}>
+        <TouchableOpacity
+          style={styles.sendButton}
+          onPress={handleCommentSubmit}>
           <Ionicons name="arrow-up-circle" size={30} color="#3366FF" />
         </TouchableOpacity>
       </View>

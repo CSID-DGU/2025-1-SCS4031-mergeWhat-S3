@@ -72,13 +72,33 @@ const AroundInfo = ({type, latitude, longitude, marketId}: AroundProps) => {
 
         const placesWithImages = await Promise.all(
           results.map(async place => {
-            const isIndoor = type === '실내놀거리'; // '실내놀거리'면 true, '관광지'면 false
+            // 🟡 하드코딩된 이미지 매핑 (예시)
+            const hardcodedImages: Record<string, string> = {
+              종묘: 'https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F056%2F2025%2F04%2F04%2F0011925200_001_20250404094713677.jpg&type=sc960_832',
+              // 필요시 다른 장소들도 추가 가능
+              흥인지문:
+                'https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyMjA3MDJfMjg3%2FMDAxNjU2NzE4OTE2ODE0.e_rzmX6nFkBCjbHp3DLT5oVS1kUpg2-ZvZrmdhsRFpgg.SnOqFQ23EWIJJcWSn7a4ZTF8WWFfFTA1GI3Q9GBDxWcg.JPEG.morison5%2FSNS_IMG_8230_210525.jpg&type=a340',
+              익선동한옥거리:
+                'https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNDEyMTVfMjcw%2FMDAxNzM0MjU2NTMzNTc0.txi5GOhy1usguk-Kw4SrKEvk4tZXk5ywtQuFNDBn_mYg.XOstiWpnc76eAaPvl0BNaRkuhMGg8Rk3jLYLBKh_jSYg.JPEG%2F900%25A3%25DF20241213%25A3%25DF123343.jpg&ty',
+              동대문생선구이골목:
+                'https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyMzAzMjlfMjY1%2FMDAxNjgwMDU0ODA2OTU3.USnUWiQ6O6RssohFRZtUvJxjYCyvA4kN7u5uvNdeYtAg.aD0DTBmWIrr-5uF6lQrr6hm5c6pkbH_r4eqNJ3mNpw8g.JPEG.yi1110%2FIMG_9713.JPG&type=sc960_832',
+            };
+
+            const hardcodedImage = hardcodedImages[place.place_name];
+
+            if (hardcodedImage) {
+              return {
+                ...place,
+                imageUrlFromDB: hardcodedImage,
+              };
+            }
+
             try {
-              // ⭐ fetchPlaceImage 호출 시 marketId 전달
+              // 기존 백엔드 API 호출 (fallback)
               const imageData = await fetchPlaceImage(
                 marketId,
                 place.place_name,
-                isIndoor,
+                false,
               );
               return {
                 ...place,

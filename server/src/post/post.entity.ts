@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { User } from 'src/auth/member.entity'; // 실제 User entity 경로에 맞게 수정
 import { PostImage } from 'src/post_image/post_image.entity';
+import { Comment } from 'src/comment/comment.entity';
 
 export type BoardType = 'produce' | 'course' | 'food' | 'fashion' | 'etc';
 
@@ -41,4 +42,7 @@ export class Post {
 
   @OneToMany(() => PostImage, (image) => image.post, { cascade: true })
   images: PostImage[];
+
+  @OneToMany(() => Comment, (comment) => comment.post, { cascade: true })
+  comments: Comment[];
 }

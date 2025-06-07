@@ -1,5 +1,3 @@
-// components/IndoorInfo/ReviewList.tsx
-
 import React, {useEffect, useState, useCallback} from 'react';
 import {
   View,
@@ -11,6 +9,7 @@ import {
 } from 'react-native';
 import {fetchReviewsByStoreId} from '../../api/review';
 import {StoreReview} from '../../types/common';
+import {reviewImageMap} from '../../components/IndoorInfo/ReviewMapping';
 
 interface ReviewListProps {
   storeId: number;
@@ -33,8 +32,7 @@ const ReviewList: React.FC<ReviewListProps> = ({
 
   const loadReviews = useCallback(async () => {
     setLoading(true);
-    // 디버깅
-    console.log(`[ReviewList] Loading reviews for storeId: ${storeId}`);
+
     try {
       const fetchedReviews = await fetchReviewsByStoreId(storeId);
       console.log('[ReviewList] fetchedReviews raw:', fetchedReviews);
@@ -46,14 +44,7 @@ const ReviewList: React.FC<ReviewListProps> = ({
         return;
       }
 
-      const validReviews = fetchedReviews.filter(
-        review => review && typeof review.id === 'number',
-      );
-
-      // 디버깅
-      console.log('[ReviewList] validReviews after filtering:', validReviews);
-
-      let sortedReviews = [...validReviews];
+      let sortedReviews = [...fetchedReviews];
 
       if (sortBy === 'latest') {
         sortedReviews.sort(
@@ -66,15 +57,26 @@ const ReviewList: React.FC<ReviewListProps> = ({
         sortedReviews.sort((a, b) => a.rating - b.rating);
       }
 
-      setReviews(sortedReviews);
+      const enrichedReviews = sortedReviews.map(r => ({
+        ...r,
+        image: r.image || reviewImageMap[r.id] || null, // DB에 이미지 없을 때만 매핑
+      }));
 
-      if (sortedReviews.length > 0) {
-        const totalRating = sortedReviews.reduce(
-          (sum, review) => sum + review.rating,
-          0,
-        );
-        const avg = totalRating / sortedReviews.length;
+      setReviews(enrichedReviews);
+
+      //setReviews(sortedReviews);
+
+      if (enrichedReviews.length > 0) {
+        const validRatings = enrichedReviews
+          .map(r => Number(r.rating))
+          .filter(r => !isNaN(r));
+
+        const totalRating = validRatings.reduce((sum, r) => sum + r, 0);
+        const avg =
+          validRatings.length > 0 ? totalRating / validRatings.length : 0;
+
         setAverageRating(parseFloat(avg.toFixed(1)));
+
         if (onAverageRatingChange) {
           onAverageRatingChange(parseFloat(avg.toFixed(1)));
         }
@@ -86,7 +88,7 @@ const ReviewList: React.FC<ReviewListProps> = ({
       }
 
       if (onReviewsLoaded) {
-        onReviewsLoaded(sortedReviews);
+        onReviewsLoaded(enrichedReviews);
       }
     } catch (error) {
       console.error('리뷰 불러오기 실패:', error);
@@ -104,8 +106,9 @@ const ReviewList: React.FC<ReviewListProps> = ({
   }, [storeId, onAverageRatingChange, sortBy, onReviewsLoaded]);
 
   useEffect(() => {
+    if (!storeId) return;
     loadReviews();
-  }, [loadReviews]);
+  }, [storeId, sortBy]);
 
   if (loading) {
     return (
@@ -116,6 +119,16 @@ const ReviewList: React.FC<ReviewListProps> = ({
     );
   }
 
+  // 리뷰 작성 날짜
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return ''; // 유효하지 않으면 빈 문자열
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
+      2,
+      '0',
+    )}-${String(date.getDate()).padStart(2, '0')}`;
+  };
+
   return (
     <View style={styles.container}>
       {/* ⭐ 평균 별점 UI 원복 ⭐ */}
@@ -124,21 +137,21 @@ const ReviewList: React.FC<ReviewListProps> = ({
           style={{flexDirection: 'row', alignItems: 'center', marginBottom: 8}}>
           <Text
             style={{
-              fontSize: 16,
+              fontSize: 17.5,
               fontWeight: 'bold',
               marginRight: 10,
               marginTop: 40,
               marginLeft: 1,
               marginBottom: 20,
             }}>
-            {averageRating.toFixed(1)}
+            {Math.floor(averageRating) + '.0'}
           </Text>
           {Array.from({length: 5}, (_, i) => (
             <Text
               key={i}
               style={{
-                fontSize: 20,
-                color: i < averageRating ? '#FF5A5F' : '#ccc', // 빨간색 별
+                fontSize: 22,
+                color: i < Math.floor(averageRating) ? '#FF5A5F' : '#ccc', // 빨간색 별
                 marginTop: 37,
                 marginBottom: 20,
               }}>
@@ -162,27 +175,46 @@ const ReviewList: React.FC<ReviewListProps> = ({
               console.warn('FlatList renderItem: item is undefined or null');
               return null;
             }
+
             return (
               <View style={styles.reviewItem}>
+                {/* 상단: 닉네임 + 별점 */}
                 <View style={styles.reviewHeader}>
-                  <Text style={styles.nickname}>{item.nickname}</Text>
+                  <View style={{flexDirection: 'column'}}>
+                    <Text style={styles.nickname}>{item.nickname}</Text>
+                    <Text style={styles.reviewDate}>
+                      {formatDate(item.created_at)}
+                    </Text>
+                  </View>
                   <View style={styles.starRatingContainer}>
-                    {/* 개별 리뷰 별점 UI는 Icon 대신 Text로 변경할지 확인 필요. 일단 Text '★'로 통일 */}
                     {Array.from({length: 5}, (_, i) => (
                       <Text
                         key={i}
                         style={{
-                          fontSize: 16, // 개별 리뷰 별점 크기
-                          color: i < item.rating ? '#FFD700' : '#ccc', // 여기는 금색 별
-                          marginHorizontal: 1, // 별 간격
+                          fontSize: 16,
+                          color: i < item.rating ? '#FFD700' : '#ccc',
+                          marginHorizontal: 1,
                         }}>
                         ★
                       </Text>
                     ))}
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        fontWeight: 'bold',
+                        color: '#333',
+                        marginLeft: 6,
+                        marginTop: 3,
+                      }}>
+                      {item.rating.toFixed(1)} {/* 예: 4.0 */}
+                    </Text>
                   </View>
-                  {/* 날짜 표시 부분은 필요시 추가 */}
                 </View>
+
+                {/* 코멘트 */}
                 <Text style={styles.reviewComment}>{item.comment}</Text>
+
+                {/* 이미지가 있는 경우만 표시 */}
                 {item.image && (
                   <Image
                     source={{uri: item.image}}
@@ -268,6 +300,8 @@ const styles = StyleSheet.create({
   reviewDate: {
     fontSize: 12,
     color: '#888',
+    marginTop: 7,
+    marginBottom: 10,
   },
   reviewComment: {
     fontSize: 14,

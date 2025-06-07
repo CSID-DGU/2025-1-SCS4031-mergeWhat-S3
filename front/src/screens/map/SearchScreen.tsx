@@ -98,6 +98,7 @@ const SearchScreen = () => {
         // 선택된 단일 시장이 아닌, 현재 검색된 전체 searchResults를 MapHome으로 전달
         navigation.navigate('MapHome', {
           searchResultsFromSearchScreen: searchResults,
+          initialSelectedMarket: item,
         });
       }}>
       <Text style={styles.searchResultText}>{item.name}</Text>

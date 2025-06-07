@@ -7,6 +7,7 @@ import {
   Image,
   Alert,
   Dimensions,
+  ScrollView,
 } from 'react-native';
 import {WebView} from 'react-native-webview';
 import {
@@ -131,7 +132,7 @@ const IndoorInfoSheet = ({
   const [averageRating, setAverageRating] = useState<number | null>(null);
 
   const {isLogin: realLogin} = useAuth();
-  const isLogin = true;
+  const isLogin = false;
 
   useEffect(() => {
     console.log('[🟢 로그인 상태]:', isLogin);
@@ -320,7 +321,7 @@ const IndoorInfoSheet = ({
     const isOpen = now >= openMin && now <= closeMin;
 
     return {
-      status: isOpen ? '영업중' : '영업 종료',
+      status: isOpen ? '영업중' : '영업중',
       time: `${todayData.open_time.slice(0, 5)} ~ ${todayData.close_time.slice(
         0,
         5,
@@ -491,6 +492,11 @@ const IndoorInfoSheet = ({
   const handleReviewsLoaded = useCallback((loadedReviews: StoreReview[]) => {
     setReviews(loadedReviews); // IndoorInfoSheet의 reviews 상태 업데이트
   }, []);
+
+  useEffect(() => {
+    // 디버깅용
+    console.log('[IndoorInfoSheet] selectedStore.id:', selectedStore?.id);
+  }, [selectedStore]);
 
   const [parkingPlaces, setParkingPlaces] = useState<any[]>([]);
 
@@ -676,7 +682,7 @@ const IndoorInfoSheet = ({
                           ? styles.sortButtonTextSelected
                           : styles.sortButtonText
                       }>
-                      ● 최신순
+                      • 최신순
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -692,7 +698,7 @@ const IndoorInfoSheet = ({
                           ? styles.sortButtonTextSelected
                           : styles.sortButtonText
                       }>
-                      ● 평점 높은 순
+                      • 평점 높은 순
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -708,7 +714,7 @@ const IndoorInfoSheet = ({
                           ? styles.sortButtonTextSelected
                           : styles.sortButtonText
                       }>
-                      ● 평점 낮은 순
+                      • 평점 낮은 순
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -762,14 +768,11 @@ const IndoorInfoSheet = ({
             <Text style={[styles.sectionTitle, styles.categoryTitle]}>
               카테고리
             </Text>
-            <View style={styles.buttonRow}>
-              {[
-                '🥬 농수산물',
-                '🍡 먹거리',
-                '👕 옷',
-                '🎎 혼수',
-                '💳 가맹점',
-              ].map(label => {
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={[styles.buttonRow, {paddingRight: 12}]}>
+              {['🥬 농수산물', '🍡 먹거리', '👕 옷', '🎎 혼수'].map(label => {
                 const pure = label.replace(/[^가-힣]/g, '');
                 return (
                   <CategoryButton
@@ -780,6 +783,7 @@ const IndoorInfoSheet = ({
                   />
                 );
               })}
+              {/* 모든 가게 보기 버튼도 여기에 포함 */}
               {selectedCategory !== null && (
                 <CategoryButton
                   label="모든 가게 보기"
@@ -787,12 +791,23 @@ const IndoorInfoSheet = ({
                   isSelected={false}
                 />
               )}
+            </ScrollView>
+
+            <View style={[styles.buttonRow, {marginTop: 4}]}>
+              <CategoryButton
+                label="💳 가맹점"
+                onPress={() => handleCategoryPress('가맹점')}
+                isSelected={selectedCategory === '가맹점'}
+              />
             </View>
 
             <Text style={[styles.sectionTitle, styles.nearbyTitle]}>
               주변 정보
             </Text>
-            <View style={[styles.buttonRow, {marginBottom: 10}]}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={[styles.buttonRow, {marginBottom: 10}]}>
               {['🚗 주차장', '🚻 화장실', '🎡 근처 놀거리'].map(label => {
                 const pure = label.replace(/[^가-힣]/g, '');
                 return (
@@ -804,7 +819,7 @@ const IndoorInfoSheet = ({
                   />
                 );
               })}
-            </View>
+            </ScrollView>
 
             {selectedCategory &&
               !productCategories.includes(selectedCategory) && (
@@ -879,23 +894,16 @@ const IndoorInfoSheet = ({
               )}
 
             {/* ⭐ 주차장 정보 렌더링 조건부 추가 */}
+
             {selectedCategory === '주차장' && (
               <ParkingInfo
-                centerLat={centerLat}
-                centerLng={centerLng}
+                centerLat={selectedMarketCenter?.latitude || 0}
+                centerLng={selectedMarketCenter?.longitude || 0}
                 webViewRef={webViewRef}
-                onParkingData={setParkingPlaces} // 부모 컴포넌트의 상태 업데이트 함수
-                onItemPress={(lat, lng) => {
-                  webViewRef.current?.postMessage(
-                    JSON.stringify({
-                      type: 'MOVE_TO_PARKING_PLACE',
-                      mode: 'parking',
-                      lat,
-                      lng,
-                    }),
-                  );
+                selectedCategory={''}
+                onItemPress={function (lat: number, lng: number): void {
+                  throw new Error('Function not implemented.');
                 }}
-                parkingPlaces={parkingPlaces}
               />
             )}
 
@@ -939,9 +947,7 @@ const IndoorInfoSheet = ({
                           </Text>
                         )}
                       </View>
-                      <Text style={styles.storeDesc}>
-                        {store.description || '설명 없음'}
-                      </Text>
+
                       {distance && (
                         <Text style={styles.storeDistance}>
                           현재 위치에서 {distance}km
@@ -982,21 +988,28 @@ const styles = StyleSheet.create({
   categoryTitle: {marginTop: -5},
   nearbyTitle: {marginTop: 17},
   marketTitle: {marginTop: 17},
-  buttonRow: {flexDirection: 'row', flexWrap: 'wrap'},
+  buttonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingBottom: 4,
+    paddingHorizontal: 2,
+  },
   button: {
-    paddingHorizontal: 10,
-    paddingVertical: 8,
     backgroundColor: '#fff',
-    borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#aaa',
+    borderColor: '#ddd',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     marginRight: 8,
     marginBottom: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1,
   },
   storeHeader: {
     flexDirection: 'row',
@@ -1004,8 +1017,14 @@ const styles = StyleSheet.create({
     marginTop: -10,
     marginBottom: 0,
   },
-  buttonSelected: {backgroundColor: '#91AEFF', borderColor: '#aaa'},
-  buttonText: {fontSize: 14},
+  buttonSelected: {
+    backgroundColor: '#e0f0ff',
+    borderColor: '#91AEFF',
+  },
+  buttonText: {
+    fontSize: 13,
+    color: '#333',
+  },
   storeCard: {marginBottom: 24},
 
   storeImage: {
